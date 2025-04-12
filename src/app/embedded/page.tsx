@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
@@ -58,7 +58,8 @@ function CheckoutForm() {
   );
 }
 
-export default function EmbeddedPage() {
+// Component that uses useSearchParams
+function EmbeddedPageContent() {
   const [clientSecret, setClientSecret] = useState<string>();
   const [planType, setPlanType] = useState<string>('');
   const searchParams = useSearchParams();
@@ -186,5 +187,14 @@ export default function EmbeddedPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function EmbeddedPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <EmbeddedPageContent />
+    </Suspense>
   );
 } 
