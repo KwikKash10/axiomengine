@@ -2,8 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // Enable webpack5
-  webpack5: true,
   // Optimize production builds
   poweredByHeader: false,
   // Enable React Fast Refresh
@@ -23,7 +21,9 @@ const nextConfig = {
   // Disable server components for static export
   experimental: {
     appDir: true
-  }
+  },
+  // Disable webpack5 as it's not needed for static export
+  webpack5: false
 };
 
 export default nextConfig; 
