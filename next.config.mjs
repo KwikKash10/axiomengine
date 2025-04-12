@@ -10,12 +10,19 @@ const nextConfig = {
   fastRefresh: true,
   // Optimize images
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'paymentsgetino.netlify.app'],
+    unoptimized: true
   },
   // Enable experimental features for better performance
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
+  },
+  // Ensure proper output for Netlify
+  output: 'standalone',
+  // Disable server components for static export
+  experimental: {
+    appDir: true
   }
 };
 
