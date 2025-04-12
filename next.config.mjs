@@ -8,7 +8,16 @@ const nextConfig = {
     unoptimized: true
   },
   // Ensure proper output for Netlify
-  output: 'export'
+  output: 'export',
+  // Handle API routes with Netlify functions
+  rewrites: async () => {
+    return [
+      {
+        source: '/api/:path*',
+        destination: '/.netlify/functions/:path*'
+      }
+    ]
+  }
 };
 
 export default nextConfig; 

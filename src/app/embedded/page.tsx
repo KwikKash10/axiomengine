@@ -65,7 +65,7 @@ function EmbeddedPageContent() {
   const searchParams = useSearchParams();
 
   // Function to create payment intent
-  const createPaymentIntent = (plan: string) => {
+  const createPaymentIntent = async (plan: string) => {
     // Plan prices mapping (in cents)
     const planPrices: Record<string, number> = {
       monthly: 1499,  // $14.99
@@ -75,17 +75,27 @@ function EmbeddedPageContent() {
 
     const amount = planPrices[plan as keyof typeof planPrices] || 9900;
 
-    // Create PaymentIntent with the plan type
-    fetch('/api/create-payment-intent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        amount, 
-        planType: plan 
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => setClientSecret(data.clientSecret));
+    try {
+      // Create PaymentIntent with the plan type using Netlify function
+      const response = await fetch('/.netlify/functions/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          amount, 
+          planType: plan 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setClientSecret(data.clientSecret);
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      // Handle error appropriately
+    }
   };
 
   // Function to handle plan selection
