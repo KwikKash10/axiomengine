@@ -210,7 +210,7 @@ export default function EmbeddedComponentsPage() {
       console.log('Amount:', planDetails.amount);
 
       // Create a Payment Intent
-      const response = await fetch('/api/create-payment-intent', {
+      const response = await fetch('/.netlify/functions/create-payment-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

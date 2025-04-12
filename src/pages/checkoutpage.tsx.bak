@@ -1,0 +1,823 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/SupabaseAuthContext';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { paymentService } from '../../services/paymentService';
+import { stripeService } from '../Stripe/api/stripe.config';
+import { 
+  FiCheck, FiLock, FiAlertCircle, FiCreditCard, FiShield, 
+  FiArrowLeft, FiUsers, FiStar, FiClock, FiAward, FiThumbsUp,
+  FiCheckCircle, FiCheckSquare, FiDollarSign, FiSlash, FiBarChart2, FiX,
+  FiRotateCcw, FiSearch, FiFileText, FiPhone, FiBell, FiCalendar,
+  FiTrendingUp, FiFilter, FiLink, FiMail, FiInbox, FiUnlock,
+  FiPackage, FiRefreshCw, FiHeadphones, FiGift, FiZap
+} from 'react-icons/fi';
+import { BsCash } from 'react-icons/bs';
+
+// Loading animation component
+const LoadingDots: React.FC = () => {
+  const [dots, setDots] = useState('...');
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    const interval = setInterval(() => {
+      setDots(prevDots => {
+        if (prevDots === '') return '.';
+        if (prevDots === '.') return '..';
+        if (prevDots === '..') return '...';
+        return '';
+      });
+    }, 500);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Use a fixed-width span to prevent text movement
+  // Only show the animated dots on the client side
+  return <span style={{ display: 'inline-block', width: '24px', textAlign: 'left' }}>
+    {mounted ? dots : '...'}
+  </span>;
+};
+
+const CheckoutPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { userData, currentUser } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
+
+  const plan = searchParams.get('plan') as 'monthly' | 'yearly' | 'lifetime' | null;
+  const couponCode = searchParams.get('coupon') || '';
+
+  // Countdown timer for urgency
+  useEffect(() => {
+    const timer = timeLeft > 0 && setInterval(() => {
+      setTimeLeft(timeLeft - 1);
+    }, 1000);
+    return () => clearInterval(timer as NodeJS.Timeout);
+  }, [timeLeft]);
+
+  // Format time as MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  useEffect(() => {
+    if (!currentUser) {
+      navigate('/login?redirect=/checkout' + (plan ? `?plan=${plan}` : ''));
+      return;
+    }
+
+    if (!plan || !['monthly', 'yearly', 'lifetime'].includes(plan)) {
+      setError('Invalid plan selected');
+      return;
+    }
+  }, [currentUser, navigate, plan]);
+
+  const handleCheckout = async () => {
+    if (!currentUser || !plan) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log(`Getting demo checkout link for plan: ${plan}`);
+
+      // Use the demo checkout link from stripe.config.ts instead of creating a session
+      const checkoutUrl = stripeService.getPaymentLink(plan);
+      
+      console.log(`Demo checkout URL: ${checkoutUrl}`);
+      
+      if (!checkoutUrl) {
+        console.error('No checkout URL returned from stripeService.getPaymentLink');
+        setError('Failed to get checkout link');
+        return;
+      }
+
+      setSuccessMessage('Redirecting to secure payment page...');
+      
+      // Short delay to show the success message before redirecting
+      console.log(`Redirecting to: ${checkoutUrl} in 1 second...`);
+      setTimeout(() => {
+        window.location.href = checkoutUrl;
+      }, 1000);
+    } catch (err) {
+      console.error('Error in handleCheckout:', err);
+      setError(err instanceof Error ? err.message : 'Failed to get checkout link');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!currentUser) {
+    return null;
+  }
+
+  const planDetails: {
+    [key in 'monthly' | 'yearly' | 'lifetime']: {
+      name: string;
+      price: string;
+      period: string;
+      features: string[];
+      savings: string;
+      popular: boolean;
+      recommended: boolean;
+      special?: boolean;
+    }
+  } = {
+    monthly: {
+      name: 'Monthly Premium',
+      price: '$29.00',
+      period: 'month',
+      features: [
+        'Full access to all opportunities',
+        'Advanced search with filters',
+        'Detailed Earnings Reports',
+        'Detailed instructions & direct links',
+        'Priority support',
+        'Earnings tracking & analytics',
+        'Push notifications',
+        'Weekly opportunity digest',
+        'Provider contact information',
+        'Custom opportunity alerts',
+        'Premium community features'
+      ],
+      savings: 'No long-term commitment',
+      popular: true,
+      recommended: false
+    },
+    yearly: {
+      name: 'Annual Premium',
+      price: '$49.00',
+      period: 'year',
+      features: [
+        'All monthly features',
+        'Save over 85% compared to monthly',
+        'Early access to new features',
+        'VIP support',
+        'Exclusive opportunities'
+      ],
+      savings: 'Save $299 compared to monthly plan',
+      popular: false,
+      recommended: true
+    },
+    lifetime: {
+      name: 'Lifetime Access',
+      price: '$149.00',
+      period: 'one-time',
+      features: [
+        'All yearly features',
+        'Never pay again',
+        'Lifetime updates',
+        'Premium support forever',
+        'Early access to all new features',
+        'Exclusive community access'
+      ],
+      savings: 'Pay once, use forever',
+      popular: false,
+      recommended: false,
+      special: true
+    }
+  };
+
+  // Testimonials for social proof
+  const testimonials = [
+    {
+      name: "James K.",
+      role: "Warehouse Worker",
+      content: "Paid for itself in a day. Incredible value for the price.",
+      stars: 5,
+      verified: true,
+      date: "2 days ago"
+    },
+    {
+      name: "Dana R.",
+      role: "Remote Worker",
+      content: "Best investment this year. The opportunities are high-quality and the support is excellent.",
+      stars: 5,
+      verified: true,
+      date: "1 week ago"
+    },
+    {
+      name: "Michael T.",
+      role: "Student",
+      content: "The premium features are definitely worth it! I've found incredible opportunities that have helped me earn while studying.",
+      stars: 4,
+      verified: true,
+      date: "2 weeks ago"
+    },
+    {
+      name: "Sarah J.",
+      role: "Freelancer",
+      content: "Made $2,000 in my first month! The opportunities are high-quality and legitimate.",
+      stars: 4,
+      verified: true,
+      date: "1 month ago"
+    },
+    {
+      name: "Robert L.",
+      role: "Part-time Worker",
+      content: "The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and the features are amazing.",
+      stars: 5,
+      verified: true,
+      date: "2 months ago"
+    }
+  ];
+
+  const selectedPlan = plan ? planDetails[plan] : null;
+
+  return (
+    <div className="min-h-screen bg-transparent py-2 px-3 sm:px-4">
+      <div className="w-full">
+        {/* Back button */}
+        <div className="mb-4">
+          <Button
+            onClick={() => navigate('/pricing')}
+            color="secondary"
+            className="flex items-center text-gray-600 hover:text-gray-900"
+          >
+            <FiArrowLeft className="mr-2" />
+            Back to Plans
+          </Button>
+        </div>
+
+        {/* Limited time offer banner - Optional urgency element */}
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-3 rounded-lg mb-4 shadow-md">
+          <div className="flex flex-col sm:flex-row items-center justify-between">
+            <div className="flex items-center mb-2 sm:mb-0">
+              <FiClock className="mr-2 h-5 w-5" />
+              <span className="font-medium">Limited Availability!</span>
+            </div>
+            <div className="text-center sm:text-right">
+              <p className="text-sm">Only <span className="font-bold">10 seats</span> left at this price</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4 justify-between">
+          {/* Left side - Order details */}
+          <div className="w-full md:flex-[0.63] space-y-6">
+            <Card className="p-6 bg-transparent">
+              <div className="text-center mb-6">
+                <h2 className="text-3xl font-extrabold text-gray-900">
+                  Complete your purchase
+                </h2>
+                <p className="mt-4 text-lg text-gray-600">
+                  You're just one step away from unlocking premium features
+                </p>
+              </div>
+
+              {successMessage && (
+                <div className="mt-4 p-4 bg-green-50 rounded-md flex items-start mb-6">
+                  <FiCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                  <p className="text-sm text-green-700">{successMessage}</p>
+                </div>
+              )}
+
+              {error && (
+                <div className="mt-4 p-4 bg-red-50 rounded-md flex items-start mb-6">
+                  <FiAlertCircle className="h-5 w-5 text-red-400 mr-2 flex-shrink-0" />
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+
+              <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h3>
+                <dl className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <dt className="text-sm font-medium text-gray-600">Plan</dt>
+                    <dd className="text-sm font-medium text-gray-900 flex items-center">
+                      {selectedPlan?.name}
+                      {selectedPlan?.popular && (
+                        <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded">
+                          Popular
+                        </span>
+                      )}
+                      {selectedPlan?.recommended && (
+                        <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded">
+                          Recommended
+                        </span>
+                      )}
+                      {selectedPlan?.special && (
+                        <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded">
+                          Best Value
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="text-sm font-medium text-gray-600">Billing</dt>
+                    <dd className="text-sm font-medium text-gray-900">
+                      {plan === 'lifetime' ? 'One-time payment' : plan === 'yearly' ? 'Annual' : 'Monthly'}
+                    </dd>
+                  </div>
+                  {couponCode && (
+                    <div className="flex items-center justify-between">
+                      <dt className="text-sm font-medium text-gray-600">Coupon</dt>
+                      <dd className="text-sm font-medium text-green-600">
+                        {couponCode.toUpperCase()}
+                      </dd>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+                    <dt className="text-base font-medium text-gray-900">Total</dt>
+                    <dd className="text-base font-medium text-gray-900">
+                      {selectedPlan?.price}{plan !== 'lifetime' ? `/${selectedPlan?.period}` : ''}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <dt className="font-medium text-green-600">You save</dt>
+                    <dd className="font-medium text-green-600">
+                      {selectedPlan?.savings}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <Button
+                onClick={handleCheckout}
+                disabled={loading || !!successMessage}
+                className="w-full flex items-center justify-center space-x-2 py-3 text-base"
+              >
+                {loading ? (
+                  'Processing...'
+                ) : (
+                  <>
+                    <FiCreditCard />
+                    <span>Proceed to Secure Payment</span>
+                  </>
+                )}
+              </Button>
+
+              {/* Security information */}
+              <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                <div className="flex items-start">
+                  <FiShield className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">Your payment information is secure</h4>
+                    <p className="text-xs text-gray-600 mt-1">
+                      We use industry-standard encryption to protect your data. Your payment information is processed securely with PCI Service Provider Level 1, the highest grade of payment processing security.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Social proof section - user stats */}
+              <div className="mt-6 bg-blue-50 rounded-lg p-4 flex flex-col sm:flex-row justify-around items-center">
+                <div className="flex items-center mb-3 sm:mb-0">
+                  <FiUsers className="text-blue-600 mr-2" />
+                  <span className="text-sm font-medium">5,000+ active users</span>
+                </div>
+                <div className="flex items-center mb-3 sm:mb-0">
+                  <FiStar className="text-blue-600 mr-2" />
+                  <span className="text-sm font-medium">4.8/5 average rating</span>
+                </div>
+                <div className="flex items-center">
+                  <FiThumbsUp className="text-blue-600 mr-2" />
+                  <span className="text-sm font-medium">98% satisfaction</span>
+                </div>
+              </div>
+
+              <div className="text-center mt-4">
+                <p className="text-sm text-gray-500">
+                  By proceeding, you agree to our{' '}
+                  <Link to="/terms" className="text-blue-600 hover:text-blue-500">
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/privacy" className="text-blue-600 hover:text-blue-500">
+                    Privacy Policy
+                  </Link>
+                </p>
+              </div>
+
+              {/* Trust signals */}
+              <div className="mt-6 border-t border-gray-200 pt-4">
+                <div className="flex flex-wrap justify-center items-center gap-4">
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FiLock className="h-4 w-4 mr-1 text-gray-400" />
+                    <span>Secure checkout</span>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FiShield className="h-4 w-4 mr-1 text-gray-400" />
+                    <span>SSL Encrypted</span>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FiCreditCard className="h-4 w-4 mr-1 text-gray-400" />
+                    <span>Trusted Payment</span>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FiRotateCcw className="h-4 w-4 mr-1 text-gray-400" />
+                    <span>Cancel Anytime</span>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FiDollarSign className="h-4 w-4 mr-1 text-gray-400 relative">
+                      <FiSlash className="absolute top-0 left-0 h-4 w-4 text-red-400 stroke-2"/>
+                    </FiDollarSign>
+                    <span>No Hidden Fees, Ever</span>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FiShield className="h-4 w-4 mr-1 text-gray-400" />
+                    <span>PCI Compliant</span>
+                  </div>
+                </div>
+                
+                {/* Money-back guarantee card */}
+                <div className="mt-4 p-4 bg-green-50 rounded-md border border-green-100">
+                  <div className="flex items-start">
+                    <FiCheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-medium text-green-800">100% Satisfaction Guarantee</h4>
+                      <p className="text-xs text-green-700 mt-1">
+                        If you're not completely satisfied with your purchase, we'll refund your payment within 30 days, no questions asked.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Secure Payment Methods card */}
+            <div className="rounded-lg bg-transparent p-3 mt-3">
+              <h3 className="text-lg font-semibold text-[#374151] mb-4 text-center">
+                Secure Payment Methods
+              </h3>
+              <div className="flex justify-center items-center gap-4">
+                <img src="/secure payment methods/visa.svg" alt="Visa" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+                <img src="/secure payment methods/mastercard.svg" alt="Mastercard" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+                <img src="/secure payment methods/maestro.svg" alt="Maestro" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+                <img src="/secure payment methods/amex.svg" alt="American Express" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+                <img src="/secure payment methods/discover.svg" alt="Discover" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+                <img src="/secure payment methods/diners.svg" alt="Diners Club" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+                <img src="/secure payment methods/cartes-bancaires.svg" alt="Cartes Bancaires" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+                <img src="/secure payment methods/apple-pay.svg" alt="Apple Pay" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+                <img src="/secure payment methods/google-pay.svg" alt="Google Pay" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+              </div>
+            </div>
+
+            {/* Testimonials section for social proof */}
+            <Card className="p-6 mt-3 bg-transparent">
+              {/* User avatars with overlap */}
+              <div className="flex items-center justify-center mb-6">
+                <div className="flex -space-x-3">
+                  <div className="h-10 w-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-50">
+                    <img 
+                      src="https://randomuser.me/api/portraits/women/18.jpg" 
+                      alt="User" 
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="h-10 w-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-40">
+                    <img 
+                      src="https://randomuser.me/api/portraits/men/45.jpg" 
+                      alt="User" 
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="h-10 w-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-30">
+                    <img 
+                      src="https://randomuser.me/api/portraits/women/68.jpg" 
+                      alt="User" 
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="h-10 w-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-20">
+                    <img 
+                      src="https://randomuser.me/api/portraits/men/22.jpg" 
+                      alt="User" 
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="h-10 w-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-10">
+                    <img 
+                      src="https://randomuser.me/api/portraits/women/88.jpg" 
+                      alt="User" 
+                      className="h-full w-full object-cover object-right"
+                    />
+                  </div>
+                  <div className="h-10 w-14 rounded-full border-2 border-white bg-[#3b82f6] flex items-center justify-center text-white text-sm font-bold shadow-sm relative z-0">
+                    +1.2K
+                  </div>
+                </div>
+              </div>
+              
+              {/* Join text */}
+              <div className="text-center mb-6">
+                <p className="text-gray-700 font-bold flex items-center justify-center">
+                  <FiUsers className="mr-2 text-blue-600" />
+                  Join over 10,000 satisfied users
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                {testimonials.map((testimonial, index) => (
+                  <div key={index} className="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-medium text-gray-700">
+                        {testimonial.name}
+                      </div>
+                      <div className="flex items-center text-xs text-gray-500">
+                        {testimonial.verified && (
+                          <span className="flex items-center mr-2">
+                            Verified
+                          </span>
+                        )}
+                        <span>{testimonial.date}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 italic mb-2">
+                      {testimonial.name === "James K." && 
+                        <>"<strong>Paid for itself in a day</strong>. Incredible value for the price."</>
+                      }
+                      {testimonial.name === "Dana R." && 
+                        <>"<strong>Best investment this year</strong>. The opportunities are high-quality and the support is excellent."</>
+                      }
+                      {testimonial.name === "Michael T." && 
+                        <>"The premium features are definitely worth it! I've <strong>found incredible opportunities</strong> that have helped me earn while studying."</>
+                      }
+                      {testimonial.name === "Sarah J." && 
+                        <>"<strong>Made $2,000 in my first month!</strong> The opportunities are high-quality and legitimate."</>
+                      }
+                      {testimonial.name === "Robert L." && 
+                        <>"The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and <strong>the features are amazing</strong>."</>
+                      }
+                    </p>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Trust rating summary */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex mr-2">
+                      {/* First 4 full stars */}
+                      {[...Array(4)].map((_, i) => (
+                        <FiStar 
+                          key={i} 
+                          className="h-5 w-5 text-amber-400 fill-amber-400" 
+                        />
+                      ))}
+                      {/* Half-filled 5th star */}
+                      <div className="relative h-5 w-5">
+                        {/* Empty star as background */}
+                        <FiStar className="h-5 w-5 text-amber-400 absolute" />
+                        {/* Half-filled star using overflow hidden */}
+                        <div className="absolute overflow-hidden w-[50%] h-5">
+                          <FiStar className="h-5 w-5 text-amber-400 fill-amber-400" />
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-lg font-bold text-gray-900">4.8</span>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Based on <span className="font-medium">1,247 reviews</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Right side - Plan details */}
+          <div className="w-full md:flex-[0.37] md:flex md:justify-end">
+            <div 
+              className="space-y-6 w-[95%] sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto"
+            >
+              {/* Plan details card */}
+              <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100">
+                <div className="p-3">
+                  {/* Plan name */}
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{selectedPlan?.name}</h3>
+                  
+                  {/* Price */}
+                  <div className="mb-4">
+                    <span className="text-2xl font-bold text-gray-900">{selectedPlan?.price}</span>
+                    {plan !== 'lifetime' && <span className="text-gray-500 text-sm">/{selectedPlan?.period}</span>}
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">What you'll get:</h4>
+                    <ul className="space-y-2 mb-4">
+                      {selectedPlan?.features.map((feature, index) => {
+                        // Choose icon based on feature text
+                        let FeatureIcon = FiCheckCircle;
+                        
+                        // Monthly plan features
+                        if (feature.includes("Full access to all opportunities")) {
+                          FeatureIcon = FiUnlock;
+                        } else if (feature.includes("Advanced search with filters")) {
+                          FeatureIcon = FiFilter;
+                        } else if (feature.includes("Detailed Earnings Reports")) {
+                          FeatureIcon = FiBarChart2;
+                        } else if (feature.includes("Detailed instructions & direct links")) {
+                          FeatureIcon = FiFileText;
+                        } else if (feature.includes("Provider contact information")) {
+                          FeatureIcon = FiPhone;
+                        } else if (feature.includes("Priority support")) {
+                          FeatureIcon = FiAward;
+                        } else if (feature.includes("Push notifications")) {
+                          FeatureIcon = FiBell;
+                        } else if (feature.includes("Weekly opportunity digest")) {
+                          FeatureIcon = FiInbox;
+                        } else if (feature.includes("Earnings tracking & analytics")) {
+                          FeatureIcon = FiTrendingUp;
+                        } else if (feature.includes("Custom opportunity alerts")) {
+                          FeatureIcon = FiAlertCircle;
+                        } else if (feature.includes("Premium community features")) {
+                          FeatureIcon = FiUsers;
+                        } 
+                        // Yearly plan features
+                        else if (feature.includes("All monthly features")) {
+                          FeatureIcon = FiPackage;
+                        } else if (feature.includes("Save over 85% compared to monthly")) {
+                          FeatureIcon = BsCash;
+                        } else if (feature.includes("Early access to new features") && !feature.includes("all")) {
+                          FeatureIcon = FiClock;
+                        } else if (feature.includes("VIP support")) {
+                          FeatureIcon = FiHeadphones;
+                        } else if (feature.includes("Exclusive opportunities")) {
+                          FeatureIcon = FiGift;
+                        } 
+                        // Lifetime plan features
+                        else if (feature.includes("All yearly features")) {
+                          FeatureIcon = FiPackage;
+                        } else if (feature.includes("Never pay again")) {
+                          FeatureIcon = BsCash;
+                        } else if (feature.includes("Lifetime updates")) {
+                          FeatureIcon = FiRefreshCw;
+                        } else if (feature.includes("Premium support forever")) {
+                          FeatureIcon = FiHeadphones;
+                        } else if (feature.includes("Early access to all new features")) {
+                          FeatureIcon = FiZap;
+                        } else if (feature.includes("Exclusive community access")) {
+                          FeatureIcon = FiUsers;
+                        }
+                        
+                        return (
+                          <li key={index} className="flex items-start">
+                            <FeatureIcon className="h-4 w-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                            <span className="text-xs text-gray-600">{feature}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                  
+                  <div className="text-center p-3 rounded-md bg-gray-50">
+                    <p className="text-gray-600 text-xs">
+                      Loading plan details<LoadingDots />
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Limited availability card */}
+              <div className="rounded-lg bg-blue-50 overflow-hidden border border-blue-100">
+                <div className="flex items-center p-4">
+                  <div className="flex-shrink-0 mr-4">
+                    <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <FiClock className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-blue-800 text-base">Limited availability!</h4>
+                    <p className="text-blue-700 text-sm">Only <span className="font-bold">10</span> spots left.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Money-back guarantee card */}
+              <div className="rounded-lg bg-green-50 overflow-hidden border border-green-100">
+                <div className="flex items-center p-4">
+                  <div className="flex-shrink-0 mr-4">
+                    <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                      <FiShield className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-green-800 text-xs md:text-sm">30-Day Money-Back Guarantee</h4>
+                    <p className="text-gray-600 text-xs mt-2">Not satisfied? Get a full refund, no questions asked.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Value proposition card */}
+              <div className="rounded-lg shadow-md border border-gray-200 overflow-hidden bg-white">
+                <div className="p-5">
+                  <h4 className="text-base font-semibold text-gray-900 mb-4">Why choose Getino Premium?</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
+                        <FiStar className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="ml-3">
+                        <h5 className="text-sm font-medium text-gray-900">Higher quality opportunities</h5>
+                        <p className="text-sm text-gray-500">Access vetted, high-paying opportunities not available to free users</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
+                        <FiUsers className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="ml-3">
+                        <h5 className="text-sm font-medium text-gray-900">Premium community</h5>
+                        <p className="text-sm text-gray-500">Connect with successful members and share strategies</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
+                        <FiAward className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="ml-3">
+                        <h5 className="text-sm font-medium text-gray-900">Priority support</h5>
+                        <p className="text-sm text-gray-500">Get help when you need it with priority customer service</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Trust badges and icons section */}
+        <div className="mt-10">
+          {/* Additional Trust Badges Section */}
+          <div className="mt-12 pt-8 border-t border-gray-200">            
+            <div className="flex flex-wrap justify-center items-center gap-3 mb-4">
+              <div>
+                <img 
+                  src="/security badges/ssl-256bit-secured.svg" 
+                  alt="SSL Secured" 
+                  className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                />
+              </div>
+              <div>
+                <img 
+                  src="/security badges/pci-compliant-badge.svg" 
+                  alt="PCI Compliant" 
+                  className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                />
+              </div>
+              <div>
+                <img 
+                  src="/security badges/verified-by-visa.svg" 
+                  alt="Verified by VISA" 
+                  className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                />
+              </div>
+              <div>
+                <img 
+                  src="/security badges/mcafee-secure.svg" 
+                  alt="McAfee Secure" 
+                  className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                />
+              </div>
+              <div>
+                <img 
+                  src="/security badges/norton-secured.svg" 
+                  alt="Norton Secured" 
+                  className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                />
+              </div>
+              <div>
+                <img 
+                  src="/security badges/secure-checkout.svg" 
+                  alt="Secure Checkout" 
+                  className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                />
+              </div>
+              <div>
+                <img 
+                  src="/security badges/secure-payment-badge.svg" 
+                  alt="Secure Payment" 
+                  className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                />
+              </div>
+            </div>
+            
+            <div className="text-center mt-6">
+              <p className="text-gray-600">Your payment is secure and encrypted. We never store your card details.</p>
+            </div>
+            
+            <div className="flex justify-center mt-6 space-x-4 text-sm items-center">
+              <a href="/terms" className="text-[#2663eb] hover:text-primary">Terms of Service</a>
+              <span className="text-[#9ca3af] text-xl flex items-center">·</span>
+              <a href="/privacy" className="text-[#2663eb] hover:text-primary">Privacy Policy</a>
+              <span className="text-[#9ca3af] text-xl flex items-center">·</span>
+              <a href="/refund" className="text-[#2663eb] hover:text-primary">Refund Policy</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CheckoutPage; 

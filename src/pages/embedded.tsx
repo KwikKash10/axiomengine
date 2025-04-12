@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
@@ -13,7 +13,7 @@ import {
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-function CheckoutForm() {
+function CheckoutForm({ planType }: { planType: string }) {
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ function CheckoutForm() {
     const { error: submitError } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/success`,
+        return_url: `${window.location.origin}/success?plan=${planType}`,
       },
     });
 
@@ -58,10 +58,10 @@ function CheckoutForm() {
   );
 }
 
-// Component that uses useSearchParams
-function EmbeddedPageContent() {
+export default function EmbeddedPage() {
   const [clientSecret, setClientSecret] = useState<string>();
   const [planType, setPlanType] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
   // Function to create payment intent
@@ -92,9 +92,10 @@ function EmbeddedPageContent() {
 
       const data = await response.json();
       setClientSecret(data.clientSecret);
+      setError(null);
     } catch (error) {
       console.error('Error creating payment intent:', error);
-      // Handle error appropriately
+      setError('Failed to initialize payment. Please try again.');
     }
   };
 
@@ -148,6 +149,12 @@ function EmbeddedPageContent() {
             </p>
           </div>
 
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 rounded-md">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
           {!planType && (
             <div className="space-y-6">
               <p className="text-center font-medium text-gray-700">Please select a subscription plan:</p>
@@ -191,20 +198,11 @@ function EmbeddedPageContent() {
 
           {clientSecret && planType && (
             <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <CheckoutForm />
+              <CheckoutForm planType={planType} />
             </Elements>
           )}
         </div>
       </div>
     </div>
-  );
-}
-
-// Main component with Suspense boundary
-export default function EmbeddedPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <EmbeddedPageContent />
-    </Suspense>
   );
 } 

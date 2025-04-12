@@ -27,7 +27,7 @@ export default function FormPage() {
       console.log('Sending checkout data:', JSON.stringify(checkoutData, null, 2));
 
       // Create a Checkout Session
-      const response = await fetch('/api/create-checkout-session', {
+      const response = await fetch('/.netlify/functions/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,62 +1,95 @@
-# Payment Service
+# Stripe Payment App
 
-A modern payment processing service built with Next.js and Stripe integration.
+A Next.js application for handling Stripe payments with various integration methods.
 
-## Features
+## Hydration Issues Solution
 
-- Stripe payment integration
-- Multiple payment methods support
-- Embedded checkout functionality
-- Payment form handling
-- Success page routing
-- API routes for payment processing
+This project addresses React hydration errors that occur when the server-rendered HTML doesn't match what React tries to render on the client side. The main issues were:
 
-## Tech Stack
+1. **Dynamic Content During Hydration**: Components like `LoadingDots` were rendering different content on the server versus the client.
 
-- Next.js
-- TypeScript
-- Stripe API
-- Tailwind CSS
+2. **Client-Side Only Components**: Some components were using browser-only APIs without proper checks.
+
+### Solution Components
+
+1. **ClientOnly Component**: A wrapper component that ensures its children are only rendered on the client side, preventing hydration mismatches.
+
+```tsx
+import React, { useState, useEffect, ReactNode } from 'react';
+
+interface ClientOnlyProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+export default function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <>{fallback}</>;
+  }
+
+  return <>{children}</>;
+}
+```
+
+2. **LoadingDots Component**: A component that displays animated loading dots, wrapped in `ClientOnly` to prevent hydration issues.
+
+```tsx
+import React from 'react';
+import ClientOnly from './ClientOnly';
+
+export default function LoadingDots({ className = '' }) {
+  return (
+    <ClientOnly fallback={<span className={className}>...</span>}>
+      <AnimatedDots className={className} />
+    </ClientOnly>
+  );
+}
+```
+
+3. **CheckoutPageWrapper**: A wrapper component for the checkout page that ensures the entire page content is only rendered on the client side.
+
+### Best Practices for Preventing Hydration Errors
+
+1. **Use the `'use client'` directive**: Mark components that use client-side features with this directive.
+
+2. **Avoid mixing server and client rendering**: Use `ClientOnly` for components that should only render on the client.
+
+3. **Provide fallbacks**: Always provide fallback content for components that might render differently on the server.
+
+4. **Check for browser APIs**: Use `typeof window !== 'undefined'` to check if code is running in the browser.
+
+5. **Use `useEffect` for client-side initialization**: Initialize state that depends on browser APIs in `useEffect`.
 
 ## Getting Started
 
-1. Clone the repository
-2. Install dependencies:
+1. Install dependencies:
    ```bash
    npm install
    ```
-3. Set up environment variables:
-   Create a `.env` file with:
-   ```
-   STRIPE_SECRET_KEY=your_stripe_secret_key
-   STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-   ```
-4. Run the development server:
+
+2. Run the development server:
    ```bash
    npm run dev
    ```
 
-## Available Routes
-
-- `/` - Home page
-- `/form` - Payment form
-- `/embedded` - Embedded payment flow
-- `/embedded-checkout` - Embedded checkout experience
-- `/embedded-components` - Custom payment components
-- `/link` - Payment link handling
-- `/success` - Payment success page
-
-## API Endpoints
-
-- `/api/create-payment-intent` - Creates a new payment intent
-- `/api/create-checkout-session` - Creates a new checkout session
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Environment Variables
 
-Required environment variables:
-- `STRIPE_SECRET_KEY`
-- `STRIPE_PUBLISHABLE_KEY`
+Create a `.env.local` file with the following variables:
 
-## License
+```
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+```
 
-MIT 
+## Learn More
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Hydration Errors](https://nextjs.org/docs/messages/react-hydration-error)
+- [Stripe Documentation](https://stripe.com/docs) 

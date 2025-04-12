@@ -82,7 +82,7 @@ export default function EmbeddedCheckoutPage() {
       console.log(`Creating checkout session for plan: ${selectedPlan}`);
 
       // Create a Checkout Session
-      const response = await fetch('/api/create-checkout-session', {
+      const response = await fetch('/.netlify/functions/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
