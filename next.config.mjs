@@ -19,7 +19,7 @@ const nextConfig = {
     scrollRestoration: true,
   },
   // Ensure proper output for Netlify
-  output: 'standalone',
+  output: 'export',
   // Disable server components for static export
   experimental: {
     appDir: true
