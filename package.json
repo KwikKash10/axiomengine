@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node node_modules/next/dist/bin/next dev",
-    "build": "node node_modules/next/dist/bin/next build",
-    "start": "node node_modules/next/dist/bin/next start",
-    "lint": "node node_modules/next/dist/bin/next lint"
+    "dev": "node ./node_modules/.bin/next dev",
+    "build": "node ./node_modules/.bin/next build",
+    "export": "node ./node_modules/.bin/next export",
+    "start": "node ./node_modules/.bin/next start",
+    "lint": "node ./node_modules/.bin/next lint"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^2.1.0",
