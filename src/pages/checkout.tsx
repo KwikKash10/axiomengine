@@ -194,7 +194,7 @@ export default function CheckoutPage() {
         };
       default:
         return {
-          name: 'Lifetime Access',
+          name: 'Lifetime',
           price: '$99.00',
           period: 'one-time',
           features: [
@@ -369,7 +369,7 @@ export default function CheckoutPage() {
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <h4 className="font-medium text-gray-900">Lifetime Access</h4>
+                          <h4 className="font-medium text-gray-900">Lifetime</h4>
                           <p className="text-sm text-gray-500">One-time payment</p>
                         </div>
                         <div className="text-right">
