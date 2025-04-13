@@ -9,8 +9,8 @@
 
 import Stripe from 'stripe';
 
-// Initialize Stripe with fallback for testing
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_yourTestKeyHere', {
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16',
 });
 
@@ -34,6 +34,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('Missing Stripe secret key in environment variables');
+      return res.status(500).json({ error: 'Server configuration error - missing API key' });
+    }
+
     console.log('Received request body:', req.body);
     
     // Get request body
