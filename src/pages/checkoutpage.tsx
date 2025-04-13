@@ -326,19 +326,21 @@ export default function CheckoutPage() {
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
             <FiArrowLeft className="mr-2" />
-            Back to Plans
+            Back to Pricing
           </Button>
         </div>
 
-        {/* Limited time offer banner - Optional urgency element */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-3 rounded-lg mb-4 shadow-md">
-          <div className="flex flex-col sm:flex-row items-center justify-between">
-            <div className="flex items-center mb-2 sm:mb-0">
-              <FiClock className="mr-2 h-5 w-5" />
-              <span className="font-medium">Limited Availability!</span>
+        {/* Limited availability card */}
+        <div className="rounded-lg bg-blue-50 overflow-hidden border border-blue-100">
+          <div className="flex items-center p-4">
+            <div className="flex-shrink-0 mr-4">
+              <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <FiClock className="h-6 w-6 text-blue-600" />
+              </div>
             </div>
-            <div className="text-sm font-bold">
-              Special offer expires in: {formatTime(timeLeft)}
+            <div>
+              <h4 className="font-medium text-blue-800 text-base">Limited availability!</h4>
+              <p className="text-blue-700 text-sm">Only <span className="font-bold">10</span> spots left.</p>
             </div>
           </div>
         </div>

@@ -251,9 +251,9 @@ export default function CheckoutPage() {
         <div className="w-full">
           {/* Back button */}
           <div className="mb-4">
-            <Link href="/pricing" className="flex items-center text-gray-600 hover:text-gray-900">
+            <Link href="https://getino.app/pricing" className="flex items-center text-gray-600 hover:text-gray-900">
               <FiArrowLeft className="mr-2" />
-              Back to Plans
+              Back to Pricing
             </Link>
           </div>
 
