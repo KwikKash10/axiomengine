@@ -68,6 +68,13 @@ export default function CheckoutPage() {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
+  useEffect(() => {
+    // Set default selected plan to 'lifetime' when component mounts
+    if (!selectedPlan) {
+      setSelectedPlan('Lifetime');
+    }
+  }, [selectedPlan]);
+
   // Handle checkout
   const handleCheckout = async () => {
     setLoading(true);
@@ -76,7 +83,8 @@ export default function CheckoutPage() {
     try {
       // Ensure we have a valid plan selected
       if (!selectedPlan) {
-        throw new Error('Invalid plan selected');
+        setErrorDetails('Please select a plan to continue');
+        return;
       }
       
       // Prepare data for API

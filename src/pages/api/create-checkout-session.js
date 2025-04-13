@@ -10,7 +10,8 @@
 import Stripe from 'stripe';
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripe = new Stripe(stripeKey ? stripeKey.trim() : '', {
   apiVersion: '2023-10-16',
 });
 
@@ -39,7 +40,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Server configuration error - missing API key' });
     }
 
-    console.log('Received request body:', req.body);
+    // Log clean request body for debugging
+    console.log('Received request body:', JSON.stringify(req.body));
     
     // Get request body
     const { planType } = req.body;
@@ -49,11 +51,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Please provide a plan type' });
     }
     
-    // Set the line items based on plan type
+    // Sanitize the plan type to ensure it's one of the valid options
+    const sanitizedPlanType = planType.toLowerCase().trim();
+    
+    // Set the line items based on sanitized plan type
     let lineItems;
     let mode = 'payment';
     
-    switch (planType) {
+    switch (sanitizedPlanType) {
       case 'lifetime':
         lineItems = [
           {
@@ -82,12 +87,12 @@ export default async function handler(req, res) {
         mode = 'subscription'; // Recurring payment
         break;
       default:
-        console.error(`Invalid plan type: ${planType}`);
-        return res.status(400).json({ error: 'Invalid plan type provided' });
+        console.error(`Invalid plan type: ${sanitizedPlanType}`);
+        return res.status(400).json({ error: `Invalid plan type provided: ${sanitizedPlanType}` });
     }
 
     // Session parameters
-    const origin = req.headers.origin || 'http://localhost:3000';
+    const origin = req.headers.origin || 'https://checkout.getino.app';
     console.log('Request origin:', origin);
     
     const baseSessionParams = {
@@ -117,12 +122,12 @@ export default async function handler(req, res) {
       sessionParams = {
         ...baseSessionParams,
         ui_mode: 'embedded',
-        return_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${planType}`,
+        return_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${sanitizedPlanType}`,
       };
     } else {
       sessionParams = {
         ...baseSessionParams,
-        success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${planType}`,
+        success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${sanitizedPlanType}`,
         cancel_url: `${origin}/form`,
       };
     }
@@ -151,7 +156,7 @@ export default async function handler(req, res) {
     
     return res.status(500).json({ 
       error: 'Error creating checkout session', 
-      message: error.message,
+      message: error.message || 'Unknown error',
       details: error
     });
   }

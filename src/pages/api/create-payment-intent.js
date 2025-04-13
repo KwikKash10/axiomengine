@@ -10,7 +10,8 @@
 import Stripe from 'stripe';
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+const stripe = new Stripe(stripeKey ? stripeKey.trim() : '', {
   apiVersion: '2023-10-16',
 });
 
@@ -39,7 +40,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Server configuration error - missing API key' });
     }
 
-    console.log('Received request body:', req.body);
+    // Log clean request body for debugging
+    console.log('Received request body:', JSON.stringify(req.body));
     
     const { amount, planType } = req.body;
 
@@ -48,11 +50,18 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Amount is required' });
     }
 
+    // Ensure amount is a clean number
+    const sanitizedAmount = parseInt(amount, 10);
+    if (isNaN(sanitizedAmount)) {
+      return res.status(400).json({ error: 'Invalid amount value' });
+    }
+
     // Define metadata based on the plan type
     const metadata = {};
     
     if (planType) {
-      metadata.planType = planType;
+      const sanitizedPlanType = planType.toLowerCase().trim();
+      metadata.planType = sanitizedPlanType;
       
       // Add product IDs based on plan type
       const productIds = {
@@ -61,23 +70,23 @@ export default async function handler(req, res) {
         monthly: 'prod_S4n8GRGIBAlcmW',
       };
       
-      if (planType in productIds) {
-        metadata.productId = productIds[planType];
+      if (sanitizedPlanType in productIds) {
+        metadata.productId = productIds[sanitizedPlanType];
       }
     }
 
-    console.log('Creating payment intent with amount:', amount);
+    console.log('Creating payment intent with amount:', sanitizedAmount);
 
     // Create the payment intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount,
+      amount: sanitizedAmount,
       currency: 'usd',
       automatic_payment_methods: {
         enabled: true,
       },
       metadata,
       description: planType 
-        ? `Payment for ${planType} plan` 
+        ? `Payment for ${planType.toLowerCase().trim()} plan` 
         : 'Payment',
     });
 
@@ -92,7 +101,7 @@ export default async function handler(req, res) {
     
     return res.status(500).json({ 
       error: 'Error creating payment intent', 
-      message: error.message,
+      message: error.message || 'Unknown error',
       details: error
     });
   }
