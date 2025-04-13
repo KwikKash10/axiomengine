@@ -357,17 +357,17 @@ export default function CheckoutPage() {
                     <h2 className="text-xl font-bold">{selectedPlan.name}</h2>
                     {selectedPlan.popular && (
                       <span className="bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        MOST POPULAR
+                        Most Popular
                       </span>
                     )}
                     {selectedPlan.recommended && (
                       <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        RECOMMENDED
+                        Recommended
                       </span>
                     )}
                     {selectedPlan.special && (
                       <span className="bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        LIMITED TIME
+                        Limited Time
                       </span>
                     )}
                   </div>

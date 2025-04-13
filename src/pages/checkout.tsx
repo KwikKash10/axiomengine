@@ -306,7 +306,7 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                       <div className="mt-2 inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                        MOST POPULAR
+                        Most Popular
                       </div>
                     </div>
 
@@ -335,7 +335,7 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                       <div className="mt-2 inline-block bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                        RECOMMENDED
+                        Recommended
                       </div>
                     </div>
 
@@ -364,7 +364,7 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                       <div className="mt-2 inline-block bg-amber-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                        BEST VALUE
+                        Best Value
                       </div>
                     </div>
                   </div>
