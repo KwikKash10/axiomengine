@@ -1,32 +1,23 @@
 [build]
   command = "npm run build"
-  publish = "out"
+  publish = ".next"
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
   NODE_VERSION = "18"
-  NPM_FLAGS = "--no-optional"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Redirect root to checkout page
-[[redirects]]
-  from = "/"
-  to = "/checkout"
-  status = 301
-  force = true
+# Remove these redirects as they're causing issues
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
 
-# Handle Next.js routing
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# Handle API routes
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-  force = true
-  headers = {X-From = "Netlify"} 
+# [[redirects]]
+#   from = "/api/*"
+#   to = "/.netlify/functions/:splat"
+#   status = 200
+#   force = true
+#   headers = {X-From = "Netlify"} 
