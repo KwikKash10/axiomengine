@@ -1,20 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import Link from 'next/link';
 
-// Initialize Stripe
+// Initialize Stripe with safeguards
 const stripePromise = typeof window !== 'undefined' 
-  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!) 
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '')
   : null;
 
-export default function EmbeddedCheckoutPage() {
+// Use React.FC type to ensure proper component typing
+const EmbeddedCheckoutPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<any>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<'lifetime' | 'yearly' | 'monthly'>('lifetime');
+  const [mounted, setMounted] = useState(false);
+
+  // Client-side only code
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render anything until client-side
+  if (!mounted) {
+    return null;
+  }
 
   // Get plan details based on selection
   const getPlanDetails = () => {
@@ -292,4 +304,6 @@ export default function EmbeddedCheckoutPage() {
       </div>
     </div>
   );
-} 
+};
+
+export default EmbeddedCheckoutPage; 
