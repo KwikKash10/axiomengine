@@ -74,9 +74,14 @@ export default function CheckoutPage() {
     setErrorDetails(null);
   
     try {
+      // Ensure we have a valid plan selected
+      if (!selectedPlan) {
+        throw new Error('Invalid plan selected');
+      }
+      
       // Prepare data for API
       const checkoutData = {
-        planType: selectedPlan?.toLowerCase(),
+        planType: selectedPlan.toLowerCase(),
       };
       
       console.log('Sending checkout data:', JSON.stringify(checkoutData, null, 2));
@@ -92,9 +97,17 @@ export default function CheckoutPage() {
   
       // Check if response is OK
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response from server:', response.status, errorText);
-        throw new Error(`Server returned ${response.status}: ${errorText}`);
+        const errorStatus = response.status;
+        let errorText = '';
+        
+        try {
+          errorText = await response.text();
+        } catch (e) {
+          errorText = 'Unable to read error response';
+        }
+        
+        console.error(`Error response from server: ${errorStatus}`, errorText);
+        throw new Error(`Server returned ${errorStatus}: ${errorText.substring(0, 100)}`);
       }
       
       // Try to parse JSON response

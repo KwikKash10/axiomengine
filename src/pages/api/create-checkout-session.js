@@ -9,23 +9,38 @@
 
 import Stripe from 'stripe';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+// Initialize Stripe with fallback for testing
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_yourTestKeyHere', {
   apiVersion: '2023-10-16',
 });
 
 // Next.js API route handler
 export default async function handler(req, res) {
+  // Add CORS headers to allow API access
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept');
+
+  // Handle OPTIONS request (preflight)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   // Only allow POST
   if (req.method !== 'POST') {
+    console.error(`Method not allowed: ${req.method}`);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    console.log('Received request body:', req.body);
+    
     // Get request body
     const { planType } = req.body;
     
     if (!planType) {
+      console.error('No plan type provided');
       return res.status(400).json({ error: 'Please provide a plan type' });
     }
     
@@ -62,11 +77,14 @@ export default async function handler(req, res) {
         mode = 'subscription'; // Recurring payment
         break;
       default:
+        console.error(`Invalid plan type: ${planType}`);
         return res.status(400).json({ error: 'Invalid plan type provided' });
     }
 
     // Session parameters
     const origin = req.headers.origin || 'http://localhost:3000';
+    console.log('Request origin:', origin);
+    
     const baseSessionParams = {
       payment_method_types: ['card'],
       line_items: lineItems,
@@ -104,12 +122,16 @@ export default async function handler(req, res) {
       };
     }
 
+    console.log('Creating session with params:', JSON.stringify(sessionParams, null, 2));
+
     // Create checkout session
     const session = await stripe.checkout.sessions.create(sessionParams);
+    console.log('Session created:', session.id);
 
     // Return appropriate data based on checkout type
     if (isEmbedded) {
       if (!session.client_secret) {
+        console.error('No client secret in session');
         return res.status(500).json({ error: 'Failed to create embedded checkout session' });
       }
       return res.status(200).json({ 

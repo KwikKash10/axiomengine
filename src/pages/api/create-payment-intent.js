@@ -9,22 +9,37 @@
 
 import Stripe from 'stripe';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+// Initialize Stripe with fallback for testing
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_yourTestKeyHere', {
   apiVersion: '2023-10-16',
 });
 
 // Next.js API route handler
 export default async function handler(req, res) {
+  // Add CORS headers to allow API access
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept');
+
+  // Handle OPTIONS request (preflight)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   // Only allow POST
   if (req.method !== 'POST') {
+    console.error(`Method not allowed: ${req.method}`);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    console.log('Received request body:', req.body);
+    
     const { amount, planType } = req.body;
 
     if (!amount) {
+      console.error('No amount provided');
       return res.status(400).json({ error: 'Amount is required' });
     }
 
@@ -46,6 +61,8 @@ export default async function handler(req, res) {
       }
     }
 
+    console.log('Creating payment intent with amount:', amount);
+
     // Create the payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
@@ -58,6 +75,8 @@ export default async function handler(req, res) {
         ? `Payment for ${planType} plan` 
         : 'Payment',
     });
+
+    console.log('Payment intent created:', paymentIntent.id);
 
     return res.status(200).json({ 
       clientSecret: paymentIntent.client_secret,
