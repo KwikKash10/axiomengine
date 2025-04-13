@@ -93,16 +93,14 @@ const EmbeddedCheckoutPage: React.FC = () => {
 
       console.log(`Creating checkout session for plan: ${selectedPlan}`);
 
-      // Create a Checkout Session
-      const response = await fetch('/.netlify/functions/create-checkout-session', {
+      // Call API to create checkout session
+      const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Requested-From': 'embedded-checkout',
         },
-        body: JSON.stringify({
-          planType: selectedPlan,
-        }),
+        body: JSON.stringify({ planType: selectedPlan }),
       });
 
       // Log the response status

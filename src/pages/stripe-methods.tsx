@@ -71,7 +71,7 @@ export default function HomePage() {
             </div>
           </Link>
 
-          {/* Embedded Components - Temporarily commented out due to build error 
+          {/* Embedded Components */}
           <Link href="/embedded-components" className="block">
             <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start">
@@ -89,7 +89,6 @@ export default function HomePage() {
               </div>
             </div>
           </Link>
-          */}
 
           {/* Advanced Elements Form */}
           <Link href="/embedded" className="block">

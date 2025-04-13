@@ -3,19 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node node_modules/next/dist/bin/next dev",
-    "build": "node node_modules/next/dist/bin/next build",
-    "export": "node node_modules/next/dist/bin/next export",
-    "start": "node node_modules/next/dist/bin/next start",
-    "lint": "node node_modules/next/dist/bin/next lint"
+    "dev": "./node_modules/.bin/next dev",
+    "build": "./node_modules/.bin/next build",
+    "start": "./node_modules/.bin/next start",
+    "lint": "./node_modules/.bin/next lint",
+    "vercel-build": "./node_modules/.bin/next build"
   },
   "dependencies": {
-    "@stripe/react-stripe-js": "^2.1.0",
-    "@stripe/stripe-js": "^1.54.0",
+    "@stripe/react-stripe-js": "^2.9.0",
+    "@stripe/stripe-js": "^1.54.2",
     "@types/js-cookie": "^3.0.6",
+    "@vercel/node": "^2.15.10",
     "classnames": "^2.5.1",
     "js-cookie": "^3.0.5",
-    "next": "^14.0.0",
+    "next": "^15.3.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-icons": "^4.12.0",

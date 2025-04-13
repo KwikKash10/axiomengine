@@ -197,26 +197,18 @@ export default function EmbeddedComponentsPage() {
 
   const createPaymentIntent = async () => {
     try {
-      if (typeof window === 'undefined') {
-        console.error('Cannot create payment intent on server side');
-        return;
-      }
-
       setLoading(true);
-      setError(null);
-      setApiResponse(null);
-
-      console.log(`Creating payment intent for plan: ${selectedPlan}`);
-      console.log('Amount:', planDetails.amount);
-
-      // Create a Payment Intent
-      const response = await fetch('/.netlify/functions/create-payment-intent', {
+      
+      // Prepare amount in cents
+      const amountInCents = planDetails.amount;
+      
+      const response = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: planDetails.amount,
+          amount: amountInCents,
           planType: selectedPlan
         }),
       });

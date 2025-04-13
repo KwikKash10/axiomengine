@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="112" height="40" viewBox="0 0 112 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1" y="1" width="110" height="38" rx="4" fill="#F9FAFB" stroke="#E5E7EB" />
+  
+  <!-- Icon -->
+  <path d="M12 14C12 13.4477 12.4477 13 13 13H19C19.5523 13 20 13.4477 20 14V18C20 21.3137 17.3137 24 14 24V24C10.6863 24 8 21.3137 8 18V16C8 14.8954 8.8954 14 10 14H12Z" fill="#EC4899" />
+  <circle cx="14" cy="19" r="2" fill="white" />
+  <path d="M14 19V21" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+  
+  <!-- Text -->
+  <text x="25" y="19" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#111827">Secure Checkout</text>
+  <text x="25" y="31" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="#EC4899">SAFE</text>
+  <text x="45" y="31" font-family="Arial, sans-serif" font-size="7" fill="#6B7280">TRANSACTIONS</text>
+</svg> 

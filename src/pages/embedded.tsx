@@ -76,13 +76,17 @@ export default function EmbeddedPage() {
     const amount = planPrices[plan as keyof typeof planPrices] || 9900;
 
     try {
-      // Create PaymentIntent with the plan type using Netlify function
-      const response = await fetch('/.netlify/functions/create-payment-intent', {
+      setError(null);
+      
+      // Call API to create payment intent
+      const response = await fetch('/api/create-payment-intent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          amount, 
-          planType: plan 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: amount,
+          planType: plan
         }),
       });
 
@@ -92,7 +96,6 @@ export default function EmbeddedPage() {
 
       const data = await response.json();
       setClientSecret(data.clientSecret);
-      setError(null);
     } catch (error) {
       console.error('Error creating payment intent:', error);
       setError('Failed to initialize payment. Please try again.');

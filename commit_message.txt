@@ -1,1 +1,8 @@
 [Cursor] Stable Release: Cross-domain auth cookies and client-side rendering fixes
+
+v1.2.0: Migrate to Vercel & improve banner positioning
+
+- Migrated serverless functions from Netlify to Vercel
+- Updated API endpoints to use Next.js API routes
+- Improved banner positioning and text alignment in plan details
+- Fixed build scripts for compatibility with Vercel deployment

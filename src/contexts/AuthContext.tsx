@@ -82,12 +82,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Set cookies for development testing
         Cookies.set(AUTH_COOKIE_NAME, JSON.stringify(mockUser), { 
           expires: 7, 
-          domain: (process.env.NODE_ENV as string) === 'production' ? '.getino.app' : undefined
+          domain: process.env.NODE_ENV as string === 'production' ? '.getino.app' : undefined
         });
         
         Cookies.set(USER_DATA_COOKIE_NAME, JSON.stringify(mockUserData), { 
           expires: 7, 
-          domain: (process.env.NODE_ENV as string) === 'production' ? '.getino.app' : undefined
+          domain: process.env.NODE_ENV as string === 'production' ? '.getino.app' : undefined
         });
         
         return true;
@@ -122,12 +122,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Set cookie with domain=.getino.app in production to share between subdomains
     Cookies.set(AUTH_COOKIE_NAME, JSON.stringify(user), { 
       expires: 7, // 7 days
-      domain: (process.env.NODE_ENV as string) === 'production' ? '.getino.app' : undefined
+      domain: process.env.NODE_ENV as string === 'production' ? '.getino.app' : undefined
     });
     
     Cookies.set(USER_DATA_COOKIE_NAME, JSON.stringify(uData), { 
       expires: 7, // 7 days
-      domain: (process.env.NODE_ENV as string) === 'production' ? '.getino.app' : undefined
+      domain: process.env.NODE_ENV as string === 'production' ? '.getino.app' : undefined
     });
   };
 

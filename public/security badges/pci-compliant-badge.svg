@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="112" height="40" viewBox="0 0 112 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1" y="1" width="110" height="38" rx="4" fill="#F9FAFB" stroke="#E5E7EB" />
+  
+  <!-- PCI Icon -->
+  <rect x="12" y="11" width="20" height="20" rx="2" fill="#4F46E5" />
+  <path d="M18 17V20M22 17V20M20 13V28" stroke="white" stroke-width="2" stroke-linecap="round" />
+  
+  <!-- PCI Text -->
+  <text x="40" y="19" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#111827">PCI Compliant</text>
+  <text x="40" y="31" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#4F46E5">Secure</text>
+  <text x="68" y="31" font-family="Arial, sans-serif" font-size="8" fill="#6B7280">Payment</text>
+</svg> 

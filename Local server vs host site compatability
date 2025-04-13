@@ -1,0 +1,1 @@
+Update API calls in several files to point to the Next.js API routes instead of the serverless netlify/vercel Functions endpoints

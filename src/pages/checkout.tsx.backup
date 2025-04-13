@@ -1,0 +1,459 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import CheckoutPageWrapper from '../components/CheckoutPageWrapper';
+import LoadingDots from '../components/LoadingDots';
+import { 
+  FiCheck, FiLock, FiAlertCircle, FiCreditCard, FiShield, 
+  FiArrowLeft, FiUsers, FiStar, FiClock, FiAward, FiThumbsUp,
+  FiCheckCircle, FiCheckSquare, FiDollarSign, FiSlash, FiBarChart2, FiX,
+  FiRotateCcw, FiSearch, FiFileText, FiPhone, FiBell, FiCalendar,
+  FiTrendingUp, FiFilter, FiLink, FiMail, FiInbox, FiUnlock,
+  FiPackage, FiRefreshCw, FiHeadphones, FiGift, FiZap
+} from 'react-icons/fi';
+import { BsCash } from 'react-icons/bs';
+
+export default function CheckoutPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
+
+  const plan = searchParams.get('plan') as 'monthly' | 'yearly' | 'lifetime' | null;
+  const couponCode = searchParams.get('coupon') || '';
+
+  // Format time remaining
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  };
+
+  // Countdown timer
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+    
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  // Handle checkout
+  const handleCheckout = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Redirect to success page
+      router.push(`/success?plan=${plan}`);
+    } catch (err) {
+      setError('An error occurred during checkout. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  // Get plan details
+  const getPlanDetails = () => {
+    switch (plan) {
+      case 'monthly':
+        return {
+          name: 'Monthly Subscription',
+          description: 'Monthly billing for full access',
+          price: '$14.99',
+          features: [
+            'Full access to all features',
+            'Monthly billing',
+            'Standard customer support',
+            'Free updates during subscription'
+          ],
+        };
+      case 'yearly':
+        return {
+          name: 'Yearly Subscription',
+          description: 'Annual billing with savings',
+          price: '$49.00',
+          features: [
+            'Full access to all features',
+            'Annual billing (save over 70%)',
+            'Priority customer support',
+            'Free updates during subscription'
+          ],
+        };
+      default:
+        return {
+          name: 'Lifetime Access',
+          description: 'One-time payment for lifetime access',
+          price: '$99.00',
+          features: [
+            'Lifetime access to all features',
+            'No recurring payments',
+            'Priority customer support',
+            'Free updates forever',
+          ],
+        };
+    }
+  };
+
+  // Testimonials for social proof
+  const testimonials = [
+    {
+      name: "James K.",
+      role: "Warehouse Worker",
+      content: "Paid for itself in a day. Incredible value for the price.",
+      stars: 5,
+      verified: true,
+      date: "2 days ago",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=60"
+    },
+    {
+      name: "Dana R.",
+      role: "Remote Worker",
+      content: "Best investment this year. The opportunities are high-quality and the support is excellent.",
+      stars: 5,
+      verified: true,
+      date: "1 week ago",
+      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=60"
+    },
+    {
+      name: "Michael T.",
+      role: "Student",
+      content: "The premium features are definitely worth it! I've found incredible opportunities that have helped me earn while studying.",
+      stars: 4,
+      verified: true,
+      date: "2 weeks ago",
+      image: "https://images.unsplash.com/photo-1517070208541-6ddc4d3efbcb?w=150&auto=format&fit=crop&q=60"
+    },
+    {
+      name: "Sarah J.",
+      role: "Freelancer",
+      content: "Made $2,000 in my first month! The opportunities are high-quality and legitimate.",
+      stars: 4,
+      verified: true,
+      date: "1 month ago",
+      image: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=150&auto=format&fit=crop&q=60"
+    },
+    {
+      name: "Robert L.",
+      role: "Part-time Worker",
+      content: "The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and the features are amazing.",
+      stars: 5,
+      verified: true,
+      date: "2 months ago",
+      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=60"
+    }
+  ];
+
+  const planDetails = getPlanDetails();
+
+  return (
+    <CheckoutPageWrapper>
+      <div className="min-h-screen bg-transparent py-2 px-3 sm:px-4">
+        <div className="w-full">
+          {/* Back button */}
+          <div className="mb-4">
+            <Link href="/pricing" className="flex items-center text-gray-600 hover:text-gray-900">
+              <FiArrowLeft className="mr-2" />
+              Back to Plans
+            </Link>
+          </div>
+
+          {/* Limited time offer banner */}
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-3 rounded-lg mb-4 shadow-md">
+            <div className="flex flex-col sm:flex-row items-center justify-between">
+              <div className="flex items-center mb-2 sm:mb-0">
+                <FiClock className="mr-2 h-5 w-5" />
+                <span className="font-medium">Limited Time Offer!</span>
+              </div>
+              <div className="text-center sm:text-right">
+                <p className="text-sm">Expires in <span className="font-bold">{formatTime(timeLeft)}</span></p>
+              </div>
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Left column - Payment form */}
+            <div className="w-full md:flex-[0.63]">
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Complete Your Order</h2>
+                
+                {/* Order summary */}
+                <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h3>
+                  <dl className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <dt className="text-sm font-medium text-gray-600">Plan</dt>
+                      <dd className="text-sm font-medium text-gray-900">{planDetails.name}</dd>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <dt className="text-sm font-medium text-gray-600">Billing</dt>
+                      <dd className="text-sm font-medium text-gray-900">
+                        {plan === 'lifetime' ? 'One-time payment' : plan === 'yearly' ? 'Annual' : 'Monthly'}
+                      </dd>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <dt className="text-sm font-medium text-gray-600">Price</dt>
+                      <dd className="text-sm font-medium text-gray-900">{planDetails.price}</dd>
+                    </div>
+                    {couponCode && (
+                      <div className="flex items-center justify-between">
+                        <dt className="text-sm font-medium text-gray-600">Coupon</dt>
+                        <dd className="text-sm font-medium text-green-600">{couponCode}</dd>
+                      </div>
+                    )}
+                    <div className="border-t border-gray-200 pt-4">
+                      <div className="flex items-center justify-between">
+                        <dt className="text-base font-medium text-gray-900">Total</dt>
+                        <dd className="text-base font-medium text-gray-900">{planDetails.price}</dd>
+                      </div>
+                    </div>
+                  </dl>
+                </div>
+
+                {/* Payment form placeholder */}
+                <div className="border border-gray-200 rounded-lg p-6 mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Information</h3>
+                  <p className="text-gray-600 mb-4">This is a placeholder for the payment form.</p>
+                  <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <p className="text-gray-500">Payment form would be here</p>
+                  </div>
+                </div>
+
+                {/* Checkout button */}
+                <button
+                  onClick={handleCheckout}
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      Processing<LoadingDots />
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center">
+                      <FiCreditCard className="mr-2" />
+                      Proceed to Secure Payment
+                    </span>
+                  )}
+                </button>
+
+                {/* Error message */}
+                {error && (
+                  <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg">
+                    <p className="flex items-center">
+                      <FiAlertCircle className="mr-2" />
+                      {error}
+                    </p>
+                  </div>
+                )}
+
+                {/* Security notice */}
+                <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                  <div className="flex items-start">
+                    <FiShield className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">Your payment information is secure</h4>
+                      <p className="text-xs text-gray-600 mt-1">
+                        We use industry-standard encryption to protect your data. Your payment information is processed securely with PCI Service Provider Level 1, the highest grade of payment processing security.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Secure Payment Methods section - moved outside the container */}
+          </div>
+
+          {/* Secure Payment Methods section */}
+          <div className="p-3 mt-2 mb-6 w-full md:flex-[0.63]">
+            <h3 className="text-lg font-semibold text-[#374151] mb-4 text-center">
+              Secure Payment Methods
+            </h3>
+            <div className="flex justify-center items-center gap-4 flex-wrap">
+              <img src="/secure payment methods/visa.svg" alt="Visa" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+              <img src="/secure payment methods/mastercard.svg" alt="Mastercard" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
+              <div className="flex items-center text-sm text-gray-500">
+                <FiCreditCard className="h-5 w-5 mr-1 text-gray-400" />
+                <span>And more payment options</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right column - Plan details */}
+          <div className="w-full md:flex-[0.37] md:flex md:justify-end">
+            <div className="space-y-6 w-[95%] sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+              {/* Plan details card */}
+              <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100">
+                <div className="p-3">
+                  {/* Plan name */}
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{planDetails.name}</h3>
+                  
+                  {/* Price */}
+                  <div className="mb-4">
+                    <span className="text-2xl font-bold text-gray-900">{planDetails.price}</span>
+                    {plan !== 'lifetime' && <span className="text-gray-500 text-sm">/{plan === 'yearly' ? 'year' : 'month'}</span>}
+                  </div>
+                  
+                  {/* Features */}
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">Features included:</h4>
+                    <ul className="space-y-2">
+                      {planDetails.features.map((feature, index) => (
+                        <li key={index} className="flex items-start">
+                          <FiCheck className="h-4 w-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-xs text-gray-600">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Limited availability card */}
+              <div className="rounded-lg bg-blue-50 overflow-hidden border border-blue-100 mb-4">
+                <div className="flex items-center p-4">
+                  <div className="flex-shrink-0 mr-4">
+                    <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <FiClock className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-blue-800 text-base">Limited availability!</h4>
+                    <p className="text-blue-700 text-sm">Only <span className="font-bold">10</span> spots left.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Money-back guarantee card */}
+              <div className="rounded-lg bg-green-50 overflow-hidden border border-green-100">
+                <div className="flex items-center p-4">
+                  <div className="flex-shrink-0 mr-4">
+                    <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                      <FiShield className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-green-800 text-xs md:text-sm">30-Day Money-Back Guarantee</h4>
+                    <p className="text-gray-600 text-xs mt-2">Not satisfied? Get a full refund, no questions asked.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Why choose Getino Premium? */}
+              <div className="rounded-lg shadow-md border border-gray-200 overflow-hidden bg-white mt-4">
+                <div className="p-5">
+                  <h4 className="text-base font-semibold text-gray-900 mb-4">Why choose Getino Premium?</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
+                        <FiStar className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="ml-3">
+                        <h5 className="text-sm font-medium text-gray-900">Higher quality opportunities</h5>
+                        <p className="text-sm text-gray-500">Access vetted, high-paying opportunities not available to free users</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
+                        <FiUsers className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="ml-3">
+                        <h5 className="text-sm font-medium text-gray-900">Premium community</h5>
+                        <p className="text-sm text-gray-500">Connect with successful members and share strategies</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
+                        <FiAward className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="ml-3">
+                        <h5 className="text-sm font-medium text-gray-900">Priority support</h5>
+                        <p className="text-sm text-gray-500">Get help when you need it with priority customer service</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Testimonials for the right column */}
+              <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100 mt-6">
+                <div className="p-4">
+                  <h3 className="text-sm font-bold mb-3 flex items-center">
+                    <FiUsers className="mr-2 text-blue-500" />
+                    Customer Testimonials
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    {testimonials.slice(2, 5).map((testimonial, index) => (
+                      <div key={index} className="border-b border-gray-200 pb-3 last:border-b-0 last:pb-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center text-xs font-medium text-gray-700">
+                            {/* User avatar - small size */}
+                            <div className="w-6 h-6 rounded-full overflow-hidden bg-[#282958] mr-2">
+                              {testimonial.image ? (
+                                <img 
+                                  src={testimonial.image} 
+                                  alt={`${testimonial.name}'s profile`} 
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      const initials = testimonial.name.split(' ').map(n => n[0]).join('');
+                                      parent.style.display = 'flex';
+                                      parent.style.alignItems = 'center';
+                                      parent.style.justifyContent = 'center';
+                                      target.style.display = 'none';
+                                      const span = document.createElement('span');
+                                      span.className = 'text-white font-semibold text-xs leading-none';
+                                      span.textContent = initials;
+                                      parent.appendChild(span);
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <span className="text-white font-semibold text-xs leading-none">
+                                    {testimonial.name.split(' ').map(n => n[0]).join('')}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            {testimonial.name}
+                          </div>
+                          <div className="flex items-center text-xs text-gray-500">
+                            {testimonial.verified && (
+                              <span className="flex items-center mr-2 text-green-600">
+                                <FiCheckCircle className="mr-1" />
+                                Verified
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-600 italic mb-1">{testimonial.content}</p>
+                        <div className="text-[10px] text-gray-500">
+                          <span>{testimonial.date}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </CheckoutPageWrapper>
+  );
+} 

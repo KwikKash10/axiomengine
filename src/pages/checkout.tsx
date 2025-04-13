@@ -70,73 +70,56 @@ export default function CheckoutPage() {
 
   // Handle checkout
   const handleCheckout = async () => {
-    if (!plan) {
-      setError('Please select a plan before proceeding');
-      return;
-    }
-
+    setLoading(true);
+    setErrorDetails(null);
+  
     try {
-      setLoading(true);
-      setError(null);
-      setErrorDetails(null);
-
-      // Log the data being sent
+      // Prepare data for API
       const checkoutData = {
-        planType: plan,
+        planType: selectedPlan?.toLowerCase(),
       };
       
       console.log('Sending checkout data:', JSON.stringify(checkoutData, null, 2));
-
-      // Create a Checkout Session
-      const response = await fetch('/.netlify/functions/create-checkout-session', {
+  
+      // Call API to create checkout session
+      const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(checkoutData),
       });
-
-      // Log the response status
-      console.log('Response status:', response.status);
+  
+      // Check if response is OK
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response from server:', response.status, errorText);
+        throw new Error(`Server returned ${response.status}: ${errorText}`);
+      }
       
-      // Get the response text first to debug
-      const responseText = await response.text();
-      console.log('Response text:', responseText);
-      
-      // Try to parse the response as JSON
+      // Try to parse JSON response
       let responseData;
       try {
-        responseData = JSON.parse(responseText);
-      } catch (e) {
-        console.error('Failed to parse response as JSON:', e);
+        responseData = await response.json();
+      } catch (error) {
+        const responseText = await response.text();
+        console.error('Invalid JSON response:', responseText.substring(0, 100) + '...');
         throw new Error(`Server returned invalid JSON: ${responseText.substring(0, 100)}...`);
       }
-      
-      if (!response.ok) {
-        console.error('Error response:', responseData);
-        setErrorDetails(responseData);
-        throw new Error(responseData.error || 'Something went wrong');
+  
+      // Check for session ID
+      if (!responseData.sessionId) {
+        console.error('Missing sessionId in response:', responseData);
+        throw new Error('Missing session ID in response');
       }
-
-      const { sessionId } = responseData;
-      console.log('Session ID received:', sessionId);
-
-      // Load Stripe
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error('Stripe failed to initialize');
-
-      // Redirect to Checkout
-      const { error } = await stripe.redirectToCheckout({
-        sessionId,
-      });
-
-      if (error) {
-        console.error('Stripe redirect error:', error);
-        throw error;
-      }
-    } catch (err) {
-      console.error('Checkout error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+  
+      // Redirect to checkout
+      const stripeUrl = `https://checkout.stripe.com/c/pay/${responseData.sessionId}`;
+      console.log('Redirecting to Stripe:', stripeUrl);
+      window.location.href = stripeUrl;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setErrorDetails(error.message || 'Error creating checkout session');
     } finally {
       setLoading(false);
     }
@@ -305,9 +288,6 @@ export default function CheckoutPage() {
                           <p className="text-sm text-gray-500">/month</p>
                         </div>
                       </div>
-                      <div className="mt-2 inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                        Most Popular
-                      </div>
                     </div>
 
                     <div 
@@ -333,9 +313,6 @@ export default function CheckoutPage() {
                           <p className="text-lg font-bold text-gray-900">$49.00</p>
                           <p className="text-sm text-gray-500">/year</p>
                         </div>
-                      </div>
-                      <div className="mt-2 inline-block bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                        Recommended
                       </div>
                     </div>
 
@@ -363,9 +340,6 @@ export default function CheckoutPage() {
                           <p className="text-sm text-gray-500">Once</p>
                         </div>
                       </div>
-                      <div className="mt-2 inline-block bg-amber-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                        Best Value
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -378,7 +352,24 @@ export default function CheckoutPage() {
                   <dl className="space-y-4">
                     <div className="flex items-center justify-between">
                       <dt className="text-sm font-medium text-gray-600">Plan</dt>
-                      <dd className="text-sm font-medium text-gray-900">{planDetails.name}</dd>
+                      <dd className="text-sm font-medium text-gray-900 flex items-center">
+                        {planDetails.name}
+                        {planDetails.popular && (
+                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs font-normal ml-2">
+                            Popular
+                          </span>
+                        )}
+                        {planDetails.recommended && (
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs font-normal ml-2">
+                            Recommended
+                          </span>
+                        )}
+                        {planDetails.special && (
+                          <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-md text-xs font-normal ml-2">
+                            Best Value
+                          </span>
+                        )}
+                      </dd>
                     </div>
                     <div className="flex items-center justify-between">
                       <dt className="text-sm font-medium text-gray-600">Billing</dt>
@@ -568,14 +559,31 @@ export default function CheckoutPage() {
 
             {/* Right column - Plan details */}
             <div className="w-full md:flex-[0.37] md:flex md:justify-end">
-              <div className="space-y-6 w-[95%] sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+              <div className="space-y-6 w-[95%]">
                 {/* Plan details card */}
-                <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100">
+                <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100 relative">
                   <div className="p-3">
                     {plan ? (
                       <>
                     {/* Plan name */}
                     <h3 className="text-lg font-bold text-gray-900 mb-2">{planDetails.name}</h3>
+                    
+                    {/* Plan tags as diagonal banners */}
+                    {planDetails.popular && (
+                      <div className="absolute top-2 right-[-45px] w-[140px] transform rotate-45 bg-blue-100 text-blue-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-blue-200">
+                        <span className="pl-[0.375rem]">Popular</span>
+                      </div>
+                    )}
+                    {planDetails.recommended && (
+                      <div className="absolute top-5 right-[-30px] w-[140px] transform rotate-45 bg-green-100 text-green-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-green-200">
+                        <span className="pl-2 flex items-center justify-center">Recommended</span>
+                      </div>
+                    )}
+                    {planDetails.special && (
+                      <div className="absolute top-2 right-[-36px] w-[140px] transform rotate-45 bg-amber-100 text-amber-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-amber-200">
+                        <span className="pl-[1.125rem]">Best Value</span>
+                      </div>
+                    )}
                     
                     {/* Price */}
                     <div className="mb-4">
