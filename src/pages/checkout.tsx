@@ -45,10 +45,12 @@ export default function CheckoutPage() {
       setSelectedPlan(plan);
       setIsValidPlan(true);
     } else {
-      setError('Invalid plan selected');
+      // Set a default plan instead of showing an error
+      setSelectedPlan(null);
       setIsValidPlan(false);
+      // Don't update URL if there's no plan
     }
-  }, [plan]);
+  }, [plan, router]);
 
   // Format time remaining
   const formatTime = (seconds: number) => {
@@ -79,11 +81,14 @@ export default function CheckoutPage() {
   const handleCheckout = async () => {
     setLoading(true);
     setErrorDetails(null);
+    setError(null);
   
     try {
       // Ensure we have a valid plan selected
       if (!selectedPlan) {
-        setErrorDetails('Please select a plan to continue');
+        setError('Please select a plan to continue');
+        setErrorDetails('No plan selected');
+        setLoading(false);
         return;
       }
       
@@ -128,18 +133,26 @@ export default function CheckoutPage() {
         throw new Error(`Server returned invalid JSON: ${responseText.substring(0, 100)}...`);
       }
   
-      // Check for session ID
+      // Check for direct URL from Stripe (preferred method)
+      if (responseData.url) {
+        console.log('Redirecting to Stripe URL:', responseData.url);
+        window.location.href = responseData.url;
+        return;
+      }
+      
+      // Fallback to session ID if URL not provided
       if (!responseData.sessionId) {
         console.error('Missing sessionId in response:', responseData);
         throw new Error('Missing session ID in response');
       }
   
-      // Redirect to checkout
+      // Redirect to checkout using session ID
       const stripeUrl = `https://checkout.stripe.com/c/pay/${responseData.sessionId}`;
       console.log('Redirecting to Stripe:', stripeUrl);
       window.location.href = stripeUrl;
     } catch (error) {
       console.error('Checkout error:', error);
+      setError('Error creating checkout session');
       setErrorDetails(error.message || 'Error creating checkout session');
     } finally {
       setLoading(false);
@@ -288,9 +301,10 @@ export default function CheckoutPage() {
                     <div 
                       onClick={() => {
                         if (plan === 'monthly') {
-                          router.push('');
+                          // If already selected, clear selection
+                          router.push('/');
                         } else {
-                          router.push('?plan=monthly');
+                          router.push('/?plan=monthly');
                         }
                       }}
                       className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
@@ -314,9 +328,10 @@ export default function CheckoutPage() {
                     <div 
                       onClick={() => {
                         if (plan === 'yearly') {
-                          router.push('');
+                          // If already selected, clear selection
+                          router.push('/');
                         } else {
-                          router.push('?plan=yearly');
+                          router.push('/?plan=yearly');
                         }
                       }}
                       className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
@@ -340,9 +355,10 @@ export default function CheckoutPage() {
                     <div 
                       onClick={() => {
                         if (plan === 'lifetime') {
-                          router.push('');
+                          // If already selected, clear selection
+                          router.push('/');
                         } else {
-                          router.push('?plan=lifetime');
+                          router.push('/?plan=lifetime');
                         }
                       }}
                       className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
@@ -365,7 +381,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {plan && (
+                {plan && selectedPlan && (
                   <>
                 {/* Order summary */}
                 <div className="bg-gray-50 rounded-lg p-6 mb-6">
@@ -425,15 +441,8 @@ export default function CheckoutPage() {
                   </dl>
                 </div>
 
-                {/* Payment form placeholder */}
-                <div className="border border-gray-200 rounded-lg p-6 mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Information</h3>
-                  <p className="text-gray-600 mb-4">This is a placeholder for the payment form.</p>
-                  <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-500">Payment form would be here</p>
-                  </div>
-                </div>
-
+                {/* Payment form placeholder - REMOVED */}
+                
                 {/* Checkout button */}
                 <button
                   onClick={handleCheckout}
@@ -584,25 +593,25 @@ export default function CheckoutPage() {
                 {/* Plan details card */}
                 <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100 relative">
                   <div className="p-3">
-                    {plan ? (
+                    {plan && selectedPlan ? (
                       <>
                     {/* Plan name */}
                     <h3 className="text-lg font-bold text-gray-900 mb-2">{planDetails.name}</h3>
                     
                     {/* Plan tags as diagonal banners */}
                     {planDetails.popular && (
-                      <div className="absolute top-2 right-[-45px] w-[140px] transform rotate-45 bg-blue-100 text-blue-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-blue-200">
-                        <span className="pl-[0.375rem]">Popular</span>
+                      <div className="absolute top-4 right-[-35px] w-[140px] transform rotate-45 bg-blue-100 text-blue-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-blue-200">
+                        <span className="pl-1">Popular</span>
                       </div>
                     )}
                     {planDetails.recommended && (
-                      <div className="absolute top-5 right-[-30px] w-[140px] transform rotate-45 bg-green-100 text-green-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-green-200">
-                        <span className="pl-2 flex items-center justify-center">Recommended</span>
+                      <div className="absolute top-8 right-[-40px] w-[160px] transform rotate-45 bg-green-100 text-green-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-green-200">
+                        <span className="pr-[0.625rem] flex items-center justify-center">Recommended</span>
                       </div>
                     )}
                     {planDetails.special && (
-                      <div className="absolute top-2 right-[-36px] w-[140px] transform rotate-45 bg-amber-100 text-amber-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-amber-200">
-                        <span className="pl-[1.125rem]">Best Value</span>
+                      <div className="absolute top-5 right-[-36px] w-[140px] transform rotate-45 bg-amber-100 text-amber-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-amber-200">
+                        <span>Best Value</span>
                       </div>
                     )}
                     

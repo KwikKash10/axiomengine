@@ -128,7 +128,7 @@ export default async function handler(req, res) {
       sessionParams = {
         ...baseSessionParams,
         success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${sanitizedPlanType}`,
-        cancel_url: `${origin}/form`,
+        cancel_url: `${origin}/checkout?plan=${sanitizedPlanType}`,
       };
     }
 
@@ -149,7 +149,10 @@ export default async function handler(req, res) {
         sessionId: session.id 
       });
     } else {
-      return res.status(200).json({ sessionId: session.id });
+      return res.status(200).json({ 
+        sessionId: session.id,
+        url: session.url // Return the complete URL from Stripe
+      });
     }
   } catch (error) {
     console.error('Error creating checkout session:', error);
