@@ -9,14 +9,15 @@
 # Use the new Next.js plugin
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-  [plugins.inputs]
-    # Include this if you're using Next.js 13.4 or above
-    nextConfigDir = "/"
 
 # Handle API routes
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
-  force = true
-  headers = {X-From = "Netlify"} 
+  force = true 
