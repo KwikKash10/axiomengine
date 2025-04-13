@@ -9,15 +9,10 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Remove these redirects as they're causing issues
-# [[redirects]]
-#   from = "/*"
-#   to = "/index.html"
-#   status = 200
-
-# [[redirects]]
-#   from = "/api/*"
-#   to = "/.netlify/functions/:splat"
-#   status = 200
-#   force = true
-#   headers = {X-From = "Netlify"} 
+# Handle API routes
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+  headers = {X-From = "Netlify"} 
