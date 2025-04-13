@@ -5,9 +5,17 @@
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
   NODE_VERSION = "18"
+  NPM_FLAGS = "--no-optional"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Redirect root to checkout page
+[[redirects]]
+  from = "/"
+  to = "/checkout"
+  status = 301
+  force = true
 
 # Handle Next.js routing
 [[redirects]]
