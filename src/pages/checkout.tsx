@@ -12,7 +12,8 @@ import {
   FiCheckCircle, FiCheckSquare, FiDollarSign, FiSlash, FiBarChart2, FiX,
   FiRotateCcw, FiSearch, FiFileText, FiPhone, FiBell, FiCalendar,
   FiTrendingUp, FiFilter, FiLink, FiMail, FiInbox, FiUnlock,
-  FiPackage, FiRefreshCw, FiHeadphones, FiGift, FiZap, FiInfo
+  FiPackage, FiRefreshCw, FiHeadphones, FiGift, FiZap, FiInfo, 
+  FiChevronUp, FiChevronDown
 } from 'react-icons/fi';
 import { BsCash } from 'react-icons/bs';
 
@@ -35,6 +36,8 @@ export default function CheckoutPage() {
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isValidPlan, setIsValidPlan] = useState(false);
+  const [showTestimonials, setShowTestimonials] = useState(false);
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null); // State for FAQ accordion
 
   const plan = searchParams.get('plan') as 'monthly' | 'yearly' | 'lifetime' | null;
   const couponCode = searchParams.get('coupon') || '';
@@ -164,7 +167,7 @@ export default function CheckoutPage() {
     switch (plan) {
       case 'monthly':
         return {
-          name: 'Monthly Premium',
+          name: 'Monthly Plan',
           price: '$14.99',
           period: 'month',
           features: [
@@ -179,7 +182,7 @@ export default function CheckoutPage() {
         };
       case 'yearly':
         return {
-          name: 'Annual Premium',
+          name: 'Yearly Plan',
           price: '$49.00',
           period: 'year',
           features: [
@@ -262,6 +265,35 @@ export default function CheckoutPage() {
 
   const planDetails = getPlanDetails();
 
+  // Function to toggle FAQ item
+  const toggleFAQ = (index: number) => {
+    setOpenFAQ(openFAQ === index ? null : index);
+  };
+
+  const faqs = [
+    {
+      question: "What's included in the free trial?",
+      answer: "The 14-day free trial includes all premium features, giving you full access to test everything the platform has to offer."
+    },
+    {
+      question: "Can I switch plans later?",
+      answer: (
+        <>
+          Yes, you can upgrade or downgrade your plan at any time. Changes will take effect at the start of your next billing cycle.
+        </>
+      )
+    },
+    {
+      question: "How do I cancel my subscription?",
+      answer: (
+        <>
+          You can cancel your subscription at any time from your account settings. 
+          Your premium access will continue until the end of your current billing period.
+        </>
+      )
+    }
+  ];
+
   return (
     <CheckoutPageWrapper>
       <div className="min-h-screen bg-[#f3f4f7] py-8 px-6 sm:px-10">
@@ -292,19 +324,19 @@ export default function CheckoutPage() {
             {/* Left column - Payment form */}
             <div className="w-full md:flex-[0.63]">
               <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Complete Your Purchase</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-3 text-center">Complete Your Purchase</h2>
                 
                 {/* Plan Selection */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Choose your plan</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-6 text-center">You're just one step away from unlocking premium features</h3>
                   <div className="space-y-4">
                     <div 
                       onClick={() => {
                         if (plan === 'monthly') {
                           // If already selected, clear selection
-                          router.push('/');
+                          router.push('/', { scroll: false });
                         } else {
-                          router.push('/?plan=monthly');
+                          router.push('/?plan=monthly', { scroll: false });
                         }
                       }}
                       className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
@@ -329,9 +361,9 @@ export default function CheckoutPage() {
                       onClick={() => {
                         if (plan === 'yearly') {
                           // If already selected, clear selection
-                          router.push('/');
+                          router.push('/', { scroll: false });
                         } else {
-                          router.push('/?plan=yearly');
+                          router.push('/?plan=yearly', { scroll: false });
                         }
                       }}
                       className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
@@ -356,9 +388,9 @@ export default function CheckoutPage() {
                       onClick={() => {
                         if (plan === 'lifetime') {
                           // If already selected, clear selection
-                          router.push('/');
+                          router.push('/', { scroll: false });
                         } else {
-                          router.push('/?plan=lifetime');
+                          router.push('/?plan=lifetime', { scroll: false });
                         }
                       }}
                       className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
@@ -411,12 +443,16 @@ export default function CheckoutPage() {
                     <div className="flex items-center justify-between">
                       <dt className="text-sm font-medium text-gray-600">Billing</dt>
                       <dd className="text-sm font-medium text-gray-900">
-                        {plan === 'lifetime' ? 'One-time payment' : plan === 'yearly' ? 'Annual' : 'Monthly'}
+                        {plan === 'lifetime' ? 'One-time payment' : plan === 'yearly' ? 'Annual' : 'Per month'}
                       </dd>
                     </div>
                     <div className="flex items-center justify-between">
                       <dt className="text-sm font-medium text-gray-600">Price</dt>
                       <dd className="text-sm font-medium text-gray-900">{planDetails.price}</dd>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <dt className="text-sm font-medium text-gray-600">VAT</dt>
+                      <dd className="text-sm font-medium text-gray-900">incl.</dd>
                     </div>
                     {couponCode && (
                       <div className="flex items-center justify-between">
@@ -429,9 +465,9 @@ export default function CheckoutPage() {
                         <dt className="text-base font-medium text-gray-900">Total</dt>
                         <dd className="text-base font-medium text-gray-900">{planDetails.price}</dd>
                       </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <dt className="font-medium text-green-600">You save</dt>
-                            <dd className="font-medium text-green-600">
+                          <div className="flex items-center justify-between text-sm mt-2">
+                            <dt className="font-light text-green-600">You save</dt>
+                            <dd className="font-light text-green-600">
                               {plan === 'monthly' && 'No long-term commitment'}
                               {plan === 'yearly' && '$130.88 compared to monthly plan'}
                               {plan === 'lifetime' && 'Pay once, use forever'}
@@ -479,7 +515,7 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Social proof section - user stats */}
-                    <div className="mt-6 bg-blue-50 rounded-lg p-4 flex flex-col sm:flex-row justify-around items-center">
+                    <div className="mt-5 bg-blue-50 rounded-lg p-4 flex flex-col sm:flex-row justify-around items-center">
                       <div className="flex items-center mb-3 sm:mb-0">
                         <FiUsers className="text-blue-600 mr-2" />
                         <span className="text-sm font-medium">5,000+ active users</span>
@@ -490,18 +526,18 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex items-center">
                         <FiThumbsUp className="text-blue-600 mr-2" />
-                        <span className="text-sm font-medium">98% satisfaction</span>
+                        <span className="text-sm font-medium">96% satisfaction</span>
                       </div>
                     </div>
 
-                    <div className="text-center mt-4">
+                    <div className="text-center mt-3">
                       <p className="text-sm text-gray-500">
                         By proceeding, you agree to our{' '}
-                        <a href="/terms" className="text-blue-600 hover:text-blue-500">
+                        <a href="https://getino.app/terms" className="text-blue-600 hover:text-blue-500">
                           Terms of Service
                         </a>{' '}
                         and{' '}
-                        <a href="/privacy" className="text-blue-600 hover:text-blue-500">
+                        <a href="https://getino.app/privacy" className="text-blue-600 hover:text-blue-500">
                           Privacy Policy
                         </a>
                       </p>
@@ -584,6 +620,17 @@ export default function CheckoutPage() {
                   <img src="/secure payment methods/apple-pay.svg" alt="Apple Pay" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
                   <img src="/secure payment methods/google-pay.svg" alt="Google Pay" className="h-8 rounded-md transition-all duration-200 hover:scale-110 hover:shadow-md" />
                 </div>
+
+                {/* Need help choosing section - MOVED & STYLED */}
+                <div className="text-center mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h3 className="text-base font-medium text-[#1e293b] mb-2">Need help choosing the right plan?</h3>
+                  <a
+                    href="https://getino.app/support"
+                    className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200 text-base font-medium inline-flex items-center"
+                  >
+                    Contact support
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -592,7 +639,7 @@ export default function CheckoutPage() {
               <div className="space-y-6 w-[95%]">
                 {/* Plan details card */}
                 <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100 relative">
-                  <div className="p-3">
+                  <div className="p-6">
                     {plan && selectedPlan ? (
                       <>
                     {/* Plan name */}
@@ -628,51 +675,51 @@ export default function CheckoutPage() {
                             {plan === 'monthly' && (
                               <>
                                 <li className="flex items-start">
-                                  <FiUnlock className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiUnlock className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Full access to all opportunities</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiFilter className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiFilter className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Advanced search with filters</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiBarChart2 className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiBarChart2 className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Detailed Earnings Reports</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiFileText className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiFileText className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Detailed instructions & direct links</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiAward className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiAward className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Priority support</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiTrendingUp className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiTrendingUp className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Earnings tracking & analytics</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiBell className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiBell className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Push notifications</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiInbox className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiInbox className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Weekly opportunity digest</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiPhone className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiPhone className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Provider contact information</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiAlertCircle className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiAlertCircle className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Custom opportunity alerts</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiUsers className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiUsers className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Premium community features</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiRefreshCw className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiRefreshCw className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Free updates during subscription</span>
                                 </li>
                               </>
@@ -680,27 +727,27 @@ export default function CheckoutPage() {
                             {plan === 'yearly' && (
                               <>
                                 <li className="flex items-start">
-                                  <FiPackage className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiPackage className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">All monthly features</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <BsCash className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <BsCash className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Save over 73% compared to monthly</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiClock className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiClock className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Early access to new features</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiHeadphones className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiHeadphones className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">VIP support</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiGift className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiGift className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Exclusive opportunities</span>
                                 </li>
                                 <li className="flex items-start">
-                                  <FiRefreshCw className={`h-4 w-4 text-[#1e293b] mr-2 flex-shrink-0 mt-0.5`} />
+                                  <FiRefreshCw className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
                                   <span className="text-xs text-gray-600">Free updates during subscription</span>
                                 </li>
                               </>
@@ -784,7 +831,7 @@ export default function CheckoutPage() {
 
                 {/* Why choose Getino Premium? */}
                 <div className="rounded-lg shadow-md border border-gray-200 overflow-hidden bg-white mt-4">
-                  <div className="p-5">
+                  <div className="p-6">
                     <h4 className="text-base font-semibold text-gray-900 mb-4">Why choose Getino Premium?</h4>
                     <div className="space-y-4">
                       <div className="flex items-start">
@@ -820,9 +867,9 @@ export default function CheckoutPage() {
 
                 {/* Testimonials for the right column */}
                 <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100 mt-6">
-                  <div className="p-4">
+                  <div className="p-6">
                     {/* Avatar circles representing users */}
-                    <div className="flex -space-x-2 mb-3 justify-center">
+                    <div className="flex -space-x-2 mb-4 justify-center">
                       <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-50">
                         <img 
                           src="https://randomuser.me/api/portraits/women/18.jpg" 
@@ -863,47 +910,90 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     
-                    <h3 className="text-sm font-bold mb-3 flex items-center">
-                      <FiUsers className="mr-2 text-blue-500" />
-                      Join over 10,000 satisfied users
-                    </h3>
+                    <div className="text-center">
+                      <h3 className="text-sm font-bold flex items-center justify-center">
+                        <FiUsers className="mr-2 text-blue-500" />
+                        Join over 5,000 active users
+                      </h3>
+
+
+
+                      <button 
+                        onClick={() => setShowTestimonials(!showTestimonials)}
+                        className="mt-2 mx-auto text-blue-500 hover:text-blue-700 text-sm flex items-center justify-center w-6 h-6"
+                        aria-label={showTestimonials ? "Hide reviews" : "Show reviews"}
+                      >
+                        {showTestimonials ? <FiChevronUp /> : <FiChevronDown />}
+                      </button>
+                    </div>
                     
-                    <div className="space-y-3">
-                      {testimonials.slice(0, 5).map((testimonial, index) => (
-                        <div key={index} className="border-b border-gray-200 pb-3 last:border-b-0 last:pb-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-xs font-medium text-gray-700">
-                              {testimonial.name}
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showTestimonials ? 'opacity-100 mt-6' : 'max-h-0 opacity-0'}`}>
+                      <div className="space-y-3">
+                        {testimonials.slice(0, 5).map((testimonial, index) => (
+                          <div key={index} className="border-b border-gray-200 pb-3 last:border-b-0 last:pb-0">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="text-xs font-medium text-gray-700">
+                                {testimonial.name}
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500">
+                                {testimonial.verified && (
+                                  <span className="flex items-center mr-2 text-green-600">
+                                    Verified
+                                  </span>
+                                )}
+                                <span>{testimonial.date}</span>
+                              </div>
                             </div>
-                            <div className="flex items-center text-xs text-gray-500">
-                              {testimonial.verified && (
-                                <span className="flex items-center mr-2 text-green-600">
-                                  <FiCheckCircle className="mr-1" />
-                                  Verified
-                                </span>
-                              )}
-                              <span>{testimonial.date}</span>
-                            </div>
+                            <p className="text-sm text-gray-600 italic mb-1">
+                              {testimonial.name === "James K." && 
+                                <>"<strong>Paid for itself in a day</strong>. Incredible value for the price."</>
+                              }
+                              {testimonial.name === "Dana R." && 
+                                <>"<strong>Best investment this year</strong>. The opportunities are high-quality and the support is excellent."</>
+                              }
+                              {testimonial.name === "Michael T." && 
+                                <>"The premium features are definitely worth it! I've <strong>found incredible opportunities</strong> that have helped me earn while studying."</>
+                              }
+                              {testimonial.name === "Sarah J." && 
+                                <>"<strong>Made $2,000 in my first month!</strong> The opportunities are high-quality and legitimate."</>
+                              }
+                              {testimonial.name === "Robert L." && 
+                                <>"The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and <strong>the features are amazing</strong>."</>
+                              }
+                            </p>
                           </div>
-                          <p className="text-sm text-gray-600 italic mb-1">
-                            {testimonial.name === "James K." && 
-                              <>"<strong>Paid for itself in a day</strong>. Incredible value for the price."</>
-                            }
-                            {testimonial.name === "Dana R." && 
-                              <>"<strong>Best investment this year</strong>. The opportunities are high-quality and the support is excellent."</>
-                            }
-                            {testimonial.name === "Michael T." && 
-                              <>"The premium features are definitely worth it! I've <strong>found incredible opportunities</strong> that have helped me earn while studying."</>
-                            }
-                            {testimonial.name === "Sarah J." && 
-                              <>"<strong>Made $2,000 in my first month!</strong> The opportunities are high-quality and legitimate."</>
-                            }
-                            {testimonial.name === "Robert L." && 
-                              <>"The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and <strong>the features are amazing</strong>."</>
-                            }
-                          </p>
+                        ))}
+                      </div>
+                      
+                      {/* Total rating and reviews section */}
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="flex mr-2">
+                              {/* First 4 full stars */}
+                              {[...Array(4)].map((_, i) => (
+                                <FiStar 
+                                  key={i} 
+                                  className="h-4 w-4 text-amber-400 fill-amber-400" 
+                                />
+                              ))}
+                              {/* Half-filled 5th star */}
+                              <div className="relative h-4 w-4">
+                                {/* Empty star as background */}
+                                <FiStar className="h-4 w-4 text-amber-400 absolute" />
+                                {/* Half-filled star using overflow hidden */}
+                                <div className="absolute overflow-hidden w-[50%] h-4">
+                                  <FiStar className="h-4 w-4 text-amber-400 fill-amber-400" />
+                                </div>
+                              </div>
+                            </div>
+                            <span className="text-sm font-bold text-gray-700">4.8</span>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Based on <span className="font-medium">347 reviews</span>
+                          </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -912,9 +1002,9 @@ export default function CheckoutPage() {
           </div>
 
           {/* Trust badges and icons section */}
-          <div className="mt-10 border-t border-[#f3f4f7]">
+          <div className="mt-10">
             {/* Benefits section */}
-            <div className="py-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="pt-8 pb-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               <div className="text-center">
                 <div className="flex justify-center mb-4">
                   <div className="h-12 w-12 rounded-full flex items-center justify-center">
@@ -950,36 +1040,26 @@ export default function CheckoutPage() {
             <div className="max-w-3xl mx-auto py-12">
               <h2 className="text-2xl font-bold text-center text-[#1e293b] mb-8">Frequently Asked Questions</h2>
               
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[#1e293b] mb-2">What's included in the free trial?</h3>
-                  <p className="text-[#475569]">The 14-day free trial includes all premium features, giving you full access to test everything the platform has to offer.</p>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold text-[#1e293b] mb-2">Can I switch plans later?</h3>
-                  <p className="text-[#475569]">Yes, you can upgrade or downgrade your plan at any time. Changes will take effect at the start of your next billing cycle.</p>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold text-[#1e293b] mb-2">How do I cancel my subscription?</h3>
-                  <p className="text-[#475569]">You can cancel your subscription at any time from your account settings. Your premium access will continue until the end of your current billing period.</p>
-                </div>
-              </div>
-
-              {/* Need help choosing section */}
-              <div className="text-center mt-12">
-                <h3 className="text-lg font-medium text-[#1e293b] mb-2">Need help choosing the right plan?</h3>
-                <a 
-                  href="#" 
-                  className="text-[#2563eb] hover:text-[#1d4ed8] font-medium inline-flex items-center underline"
-                >
-                  Contact our support team
-                </a>
+              <div className="space-y-4">
+                {faqs.map((faq, index) => (
+                  <div key={index} className="py-2">
+                    <button
+                      onClick={() => toggleFAQ(index)}
+                      className="w-full text-center text-gray-700 hover:text-gray-900 focus:outline-none"
+                    >
+                      <h3 className="text-lg font-medium">{faq.question}</h3>
+                    </button>
+                    {openFAQ === index && (
+                      <div className="mt-3 px-4 text-center">
+                        <p className="text-base text-gray-600 leading-relaxed">{faq.answer}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="pt-8 pb-4">            
+            <div className="pt-8 pb-4 border-t border-[#f3f4f7]">
               <div className="flex flex-wrap justify-center items-center gap-3 mb-4">
                 <div>
                   <img 
@@ -1033,15 +1113,15 @@ export default function CheckoutPage() {
               </div>
               
               <div className="text-center mt-6">
-                <p className="text-[#4b5563]">Your payment is secure and encrypted. We never store your card details.</p>
+                <p className="text-[#4b5563] font-light">Your payment is secure and encrypted. We never store your card details.</p>
               </div>
               
               <div className="flex justify-center mt-6 space-x-4 text-sm items-center">
-                <a href="/terms" className="text-[#2663eb] hover:text-[#4b5563] transition-colors duration-200">Terms of Service</a>
+                <a href="https://getino.app/terms" className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200">Terms of Service</a>
                 <span className="text-[#9ca3af] text-xl flex items-center">·</span>
-                <a href="/privacy" className="text-[#2663eb] hover:text-[#4b5563] transition-colors duration-200">Privacy Policy</a>
+                <a href="https://getino.app/privacy" className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200">Privacy Policy</a>
                 <span className="text-[#9ca3af] text-xl flex items-center">·</span>
-                <a href="/refund" className="text-[#2663eb] hover:text-[#4b5563] transition-colors duration-200">Refund Policy</a>
+                <a href="https://getino.app/help" className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200">Refund Policy</a>
               </div>
             </div>
           </div>
