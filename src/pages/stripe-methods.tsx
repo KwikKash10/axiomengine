@@ -72,7 +72,7 @@ export default function HomePage() {
           </Link>
 
           {/* Embedded Components */}
-          <Link href="/embedded-components" className="block">
+          <Link href="/embedded" className="block">
             <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
@@ -84,14 +84,14 @@ export default function HomePage() {
                 </div>
                 <div className="ml-4">
                   <h2 className="text-lg font-semibold text-gray-900">Embedded Components</h2>
-                  <p className="mt-1 text-gray-600">Simple embedded payment form with Stripe Elements</p>
+                  <p className="mt-1 text-gray-600">Simple embedded payment form with Stripe Elements - points to /embedded</p>
                 </div>
               </div>
             </div>
           </Link>
 
           {/* Advanced Elements Form */}
-          <Link href="/embedded" className="block">
+          <Link href="/embedded-components" className="block">
             <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
@@ -103,7 +103,31 @@ export default function HomePage() {
                 </div>
                 <div className="ml-4">
                   <h2 className="text-lg font-semibold text-gray-900">Advanced Elements Form</h2>
-                  <p className="mt-1 text-gray-600">Feature-rich payment form with plan selection</p>
+                  <p className="mt-1 text-gray-600">Feature-rich payment form with plan selection - points to /embedded-components</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          {/* New Payment Element */}
+          <Link href="/payment-element" className="block">
+            <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-blue-500">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    New Payment Element 
+                    <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      NEW
+                    </span>
+                  </h2>
+                  <p className="mt-1 text-gray-600">Stripe's latest all-in-one Payment Element with multiple payment methods in a single component</p>
                 </div>
               </div>
             </div>

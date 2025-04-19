@@ -88,7 +88,21 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
 
 # Lessons
 
-## Current Task: Deploy to Netlify
+## Current Task: Fix Failed to Fetch Error in Currency Detection
+
+[X] Fix the "Failed to fetch" error in checkout.tsx detectUserCurrency function
+[X] Implement a timeout mechanism to prevent the API call from hanging
+[X] Add localStorage caching to reduce API calls and provide a fallback
+[X] Improve error handling to ensure the UI doesn't break if the API fails
+
+## Previous Task: Update Price IDs
+
+[X] Update price IDs in src/pages/api/create-checkout-session.js
+[X] Update price IDs in netlify/functions/create-checkout-session.js
+[X] Update price IDs in stripe-check.js for verification
+[X] Clean up checkout links in src/pages/checkout.tsx (removed hash fragments)
+
+## Previous Task: Deploy to Netlify
 
 [X] Fix build errors - Resolved type issue with process.env.NODE_ENV by adding type assertion
 [X] Update netlify.toml configuration - Changed publish directory from "out" to ".next"
@@ -97,9 +111,18 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
 [X] Create missing _document.tsx file to fix build errors
 
 ## Lessons
+- When making external API calls in React components, always implement:
+  1. Timeout mechanisms using AbortController to prevent hangs (e.g., `setTimeout(() => controller.abort(), 3000)`)
+  2. Local storage caching to reduce API calls and provide fallbacks
+  3. Multiple fallback strategies (like browser locale detection if geolocation API fails)
+  4. Error boundaries so the UI doesn't break if the API is unavailable
 - When working with process.env values in TypeScript with Next.js, you may need to add type assertions
   to avoid type comparison errors (e.g., `process.env.NODE_ENV as string === 'production'`)
 - Next.js applications deployed to Netlify should use ".next" as the publish directory when using
   the @netlify/plugin-nextjs plugin
 - Always create a _document.tsx file for Next.js projects to avoid build errors
 - For SEO and clean URLs, rendering content directly on index.tsx is better than using client-side redirects
+- When updating Stripe price IDs, make sure to update all references in:
+  1. API routes that create checkout sessions (Vercel & Netlify functions)
+  2. Utility scripts like stripe-check.js used for verification
+  3. Any hardcoded checkout links in the frontend

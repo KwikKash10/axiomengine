@@ -16,24 +16,47 @@ exports.handler = async (event, context) => {
 
   try {
     // Get request body
-    const { planType } = JSON.parse(event.body);
+    const { planType, userCurrency, convertedAmount } = JSON.parse(event.body);
     
     if (!planType) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Please provide a plan type' }),
+        body: JSON.stringify({ error: 'Plan type is required' }),
+      };
+    }
+
+    if (!userCurrency) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Currency is required' }),
+      };
+    }
+
+    if (!convertedAmount) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Converted amount is required' }),
       };
     }
     
-    // Set the line items based on plan type
+    // Set the line items based on plan type with dynamic currency
     let lineItems;
     let mode = 'payment';
+    const productIds = {
+      lifetime: 'prod_S4nB4crsooi2fN',
+      yearly: 'prod_S4nAJKWNYnrZ8C',
+      monthly: 'prod_S4n8GRGIBAlcmW',
+    };
     
     switch (planType) {
       case 'lifetime':
         lineItems = [
           {
-            price: 'price_1RD3gC2KitrBpBuOuqkGm3ak', // Lifetime price ID
+            price_data: {
+              currency: userCurrency.toLowerCase(),
+              product: productIds[planType],
+              unit_amount: convertedAmount,
+            },
             quantity: 1,
           },
         ];
@@ -42,7 +65,15 @@ exports.handler = async (event, context) => {
       case 'yearly':
         lineItems = [
           {
-            price: 'price_1RAdaI2KitrBpBuODqkgJjmt', // Yearly subscription price ID
+            price_data: {
+              currency: userCurrency.toLowerCase(),
+              product: productIds[planType],
+              unit_amount: convertedAmount,
+              recurring: {
+                interval: 'year',
+                interval_count: 1,
+              },
+            },
             quantity: 1,
           },
         ];
@@ -51,7 +82,15 @@ exports.handler = async (event, context) => {
       case 'monthly':
         lineItems = [
           {
-            price: 'price_1RD2Qz2KitrBpBuOnrgYdeS9', // Monthly subscription price ID
+            price_data: {
+              currency: userCurrency.toLowerCase(),
+              product: productIds[planType],
+              unit_amount: convertedAmount,
+              recurring: {
+                interval: 'month',
+                interval_count: 1,
+              },
+            },
             quantity: 1,
           },
         ];

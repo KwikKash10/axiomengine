@@ -10,7 +10,7 @@ async function getStripeData() {
     // Check new lifetime price ID
     console.log('Checking new lifetime price ID...');
     try {
-      const lifetimePrice = await stripe.prices.retrieve('price_1RD3gC2KitrBpBuOuqkGm3ak');
+      const lifetimePrice = await stripe.prices.retrieve('price_1RE8O72KitrBpBuO12sd4L3M');
       console.log(`New Lifetime price ID: ${lifetimePrice.id}`);
       console.log(`Price: $${lifetimePrice.unit_amount / 100}`);
       console.log(`Type: ${lifetimePrice.type}`);
@@ -26,7 +26,7 @@ async function getStripeData() {
     // Check old lifetime price ID for comparison
     console.log('\nChecking old lifetime price ID for comparison...');
     try {
-      const oldLifetimePrice = await stripe.prices.retrieve('price_1RD2Z02KitrBpBuOSJo9Bilj');
+      const oldLifetimePrice = await stripe.prices.retrieve('price_1RD3gC2KitrBpBuOuqkGm3ak');
       console.log(`Old Lifetime price ID: ${oldLifetimePrice.id}`);
       console.log(`Price: $${oldLifetimePrice.unit_amount / 100}`);
       console.log(`Type: ${oldLifetimePrice.type}`);
@@ -42,7 +42,7 @@ async function getStripeData() {
     // Check monthly price ID
     console.log('\nChecking monthly price ID...');
     try {
-      const monthlyPrice = await stripe.prices.retrieve('price_1RD2Qz2KitrBpBuOnrgYdeS9');
+      const monthlyPrice = await stripe.prices.retrieve('price_1RE4uK2KitrBpBuOLcp4UXHX');
       console.log(`Monthly price: $${monthlyPrice.unit_amount / 100} - Type: ${monthlyPrice.type} - Interval: ${monthlyPrice.recurring?.interval}`);
     } catch (error) {
       console.error('Error retrieving monthly price:', error.message);
@@ -51,7 +51,7 @@ async function getStripeData() {
     // Check yearly price ID
     console.log('\nChecking yearly price ID...');
     try {
-      const yearlyPrice = await stripe.prices.retrieve('price_1RAdaI2KitrBpBuODqkgJjmt');
+      const yearlyPrice = await stripe.prices.retrieve('price_1RE8Lt2KitrBpBuOYYbxSAKp');
       console.log(`Yearly price: $${yearlyPrice.unit_amount / 100} - Type: ${yearlyPrice.type} - Interval: ${yearlyPrice.recurring?.interval}`);
     } catch (error) {
       console.error('Error retrieving yearly price:', error.message);

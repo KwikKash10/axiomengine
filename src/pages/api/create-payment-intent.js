@@ -43,18 +43,31 @@ export default async function handler(req, res) {
     // Log clean request body for debugging
     console.log('Received request body:', JSON.stringify(req.body));
     
-    const { amount, planType } = req.body;
+    const { amount, convertedAmount, userCurrency, planType } = req.body;
 
     if (!amount) {
       console.error('No amount provided');
       return res.status(400).json({ error: 'Amount is required' });
     }
 
+    if (!convertedAmount) {
+      console.error('No converted amount provided');
+      return res.status(400).json({ error: 'Converted amount is required' });
+    }
+
+    if (!userCurrency) {
+      console.error('No currency provided');
+      return res.status(400).json({ error: 'Currency is required' });
+    }
+
     // Ensure amount is a clean number
-    const sanitizedAmount = parseInt(amount, 10);
+    const sanitizedAmount = parseInt(convertedAmount, 10);
     if (isNaN(sanitizedAmount)) {
       return res.status(400).json({ error: 'Invalid amount value' });
     }
+
+    // Sanitize currency
+    const sanitizedCurrency = userCurrency.toLowerCase().trim();
 
     // Define metadata based on the plan type
     const metadata = {};
@@ -75,12 +88,12 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log('Creating payment intent with amount:', sanitizedAmount);
+    console.log('Creating payment intent with amount:', sanitizedAmount, 'currency:', sanitizedCurrency);
 
     // Create the payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: sanitizedAmount,
-      currency: 'usd',
+      currency: sanitizedCurrency,
       automatic_payment_methods: {
         enabled: true,
       },

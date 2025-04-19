@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<svg width="512" height="512" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+    <!-- Main Circle - expanded to fill entire space -->
+    <circle cx="100" cy="100" r="100" fill="#282958" />
+    
+    <!-- G Letter - proportionally larger -->
+    <path 
+        d="M100 45C67 45 40 72 40 105C40 138 67 165 100 165C133 165 160 138 160 105C160 90 155 76 146 65"
+        stroke="#fcba03"
+        stroke-width="14"
+        stroke-linecap="round"
+    />
+    
+    <!-- Dollar Sign - proportionally larger -->
+    <path 
+        d="M100 62V72M100 138V148M122 88C122 76 112 66.5 100 66.5C88 66.5 78 76 78 88C78 100 88 105 100 105C112 105 122 110 122 122C122 134 112 143.5 100 143.5C88 143.5 78 134 78 122"
+        stroke="#ffffff"
+        stroke-width="10"
+        stroke-linecap="round"
+    />
+    
+    <!-- Light Sparkle -->
+    <circle cx="60" cy="60" r="8" fill="#ffffff" opacity="0.7" />
+</svg>

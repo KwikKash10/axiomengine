@@ -15,12 +15,26 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { amount, planType } = JSON.parse(event.body);
+    const { amount, convertedAmount, userCurrency, planType } = JSON.parse(event.body);
 
     if (!amount) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Amount is required' }),
+        body: JSON.stringify({ error: 'Original amount is required' }),
+      };
+    }
+
+    if (!convertedAmount) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Converted amount is required' }),
+      };
+    }
+
+    if (!userCurrency) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Currency is required' }),
       };
     }
 
@@ -44,8 +58,8 @@ exports.handler = async (event, context) => {
 
     // Create the payment intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: 'usd',
+      amount: parseInt(convertedAmount, 10),
+      currency: userCurrency.toLowerCase(),
       automatic_payment_methods: {
         enabled: true,
       },
