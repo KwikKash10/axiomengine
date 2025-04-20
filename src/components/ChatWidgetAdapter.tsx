@@ -1,0 +1,105 @@
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
+
+const ChatWidgetAdapter = () => {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen);
+  };
+  
+  const closeChat = () => {
+    setIsChatOpen(false);
+  };
+  
+  // Close chat when clicking outside
+  useEffect(() => {
+    if (!isChatOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        chatContainerRef.current && 
+        !chatContainerRef.current.contains(event.target as Node) &&
+        !(event.target as HTMLElement).closest('[data-chat-toggle]') &&
+        !(event.target as HTMLElement).closest('#scroll-to-top-button')
+      ) {
+        closeChat();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isChatOpen]);
+
+  return (
+    <>
+      {/* Chat toggle button - fixed at bottom right */}
+      <button
+        data-chat-toggle
+        onClick={toggleChat}
+        className="fixed bottom-5 right-6 z-[99999] w-[45px] h-[45px] flex items-center justify-center bg-[#282958] text-white rounded-full shadow-[0_2px_6px_0_rgba(0,0,0,0.2)] transition-all duration-300 group transform hover:scale-105"
+        style={{ position: 'fixed' }}
+        aria-label="Toggle chat"
+      >
+        <svg width="30" height="30" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 7C8 5.34315 9.34315 4 11 4H29C30.6569 4 32 5.34315 32 7V27L32 30H32V35L24 30H11C9.34315 30 8 28.6569 8 27V7Z" fill="white"/>
+          <path d="M12 22C15 25 25 25 28 22" stroke="#282958" strokeWidth="2" strokeLinecap="round" className="transition-colors duration-300"/>
+        </svg>
+      </button>
+      
+      {/* Chat widget container */}
+      {isChatOpen && (
+        <div 
+          ref={chatContainerRef}
+          className="fixed right-6 z-[99999] rounded-lg shadow-xl flex flex-col overflow-hidden bg-white bottom-[calc(24px+80px)] w-[85vw] sm:w-[376px]"
+          style={{ 
+            height: '60vh',
+            maxHeight: 'calc(100vh - 160px)',
+            right: '0.75rem'
+          }}
+        >
+          {/* Chat header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <h3 className="font-semibold text-lg text-gray-900">
+              Chat Support
+            </h3>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={closeChat}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Close chat"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          {/* Chat body */}
+          <div className="flex-1 flex flex-col p-4">
+            <div className="text-center py-8">
+              <h3 className="text-lg font-semibold mb-2">Welcome to Get Paid App Support</h3>
+              <p className="text-gray-600 mb-4">How can we help you today?</p>
+              
+              <div className="space-y-4">
+                <a href="https://getino.app/support" className="w-full py-3 px-4 bg-[#282958] text-white rounded-lg hover:bg-opacity-90 transition-all inline-block text-center">
+                  Contact Support
+                </a>
+                <a href="https://getino.app/help" className="w-full py-3 px-4 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-all inline-block text-center">
+                  View FAQs
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default ChatWidgetAdapter; 

@@ -1,0 +1,42 @@
+{
+  "name": "stripe-payment-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 node server.js",
+    "dev:ssl": "local-ssl-proxy --source 3010 --target 3000 --cert localhost.pem --key localhost-key.pem",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "vercel-build": "./node_modules/.bin/next build"
+  },
+  "dependencies": {
+    "@stripe/react-stripe-js": "^2.9.0",
+    "@stripe/stripe-js": "^1.54.2",
+    "@types/js-cookie": "^3.0.6",
+    "@vercel/node": "^2.15.10",
+    "classnames": "^2.5.1",
+    "js-cookie": "^3.0.5",
+    "next": "^15.3.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-icons": "^4.12.0",
+    "stripe": "^18.0.0"
+  },
+  "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.10.5",
+    "@types/node": "^20.5.9",
+    "@types/react": "18.2.21",
+    "@types/react-dom": "18.2.7",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^8.48.0",
+    "eslint-config-next": "13.4.19",
+    "local-ssl-proxy": "^2.0.5",
+    "mkcert": "^3.2.0",
+    "netlify-cli": "^20.0.2",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.2.2",
+    "vercel": "^41.6.1"
+  }
+}

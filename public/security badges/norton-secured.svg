@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="90" height="40" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1" y="1" width="78" height="38" rx="4" fill="#F9FAFB" stroke="#E5E7EB" />
+  
+  <!-- Norton Shield -->
+  <path d="M18 11L10 14V19C10 24 13.5 27.5 18 29C22.5 27.5 26 24 26 19V14L18 11Z" fill="#FFCC00" stroke="#333333" stroke-width="0.75"/>
+  <path d="M18 14C15.5147 14 13.5 16.0147 13.5 18.5C13.5 20.3489 14.5744 21.9522 16.1445 22.6537C16.0464 22.8367 15.9902 23.0493 15.9902 23.2764C15.9902 23.976 16.5545 24.5417 17.2539 24.5417H18.7461C19.4473 24.5417 20.0098 23.9751 20.0098 23.2764C20.0098 23.0493 19.9536 22.8367 19.8555 22.6537C21.4256 21.9522 22.5 20.3489 22.5 18.5C22.5 16.0147 20.4853 14 18 14ZM18 15.75C19.4997 15.75 20.75 17.0003 20.75 18.5C20.75 19.9997 19.4997 21.25 18 21.25C16.5003 21.25 15.25 19.9997 15.25 18.5C15.25 17.0003 16.5003 15.75 18 15.75Z" fill="#333333"/>
+  
+  <!-- Norton Text -->
+  <text x="32" y="19" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#333333">Norton</text>
+  <text x="32" y="31" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#6B7280">SECURED</text>
+</svg> 

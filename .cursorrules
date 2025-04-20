@@ -1,0 +1,188 @@
+# Instructions
+
+During your interaction with the user, if you find anything reusable in this project (e.g. version of a library, model name), especially about a fix to a mistake you made or a correction you received, you should take note in the `Lessons` section in the `.cursorrules` file so you will not make the same mistake again. 
+
+You should also use the `.cursorrules` file as a Scratchpad to organize your thoughts. Especially when you receive a new task, you should first review the content of the Scratchpad, clear old different task if necessary, first explain the task, and plan the steps you need to take to complete the task. You can use todo markers to indicate the progress, e.g.
+[X] Task 1
+[ ] Task 2
+
+Also update the progress of the task in the Scratchpad when you finish a subtask.
+Especially when you finished a milestone, it will help to improve your depth of task accomplishment to use the Scratchpad to reflect and plan.
+The goal is to help you maintain a big picture as well as the progress of the task. Always refer to the Scratchpad when you plan the next step.
+
+# Tools
+
+Note all the tools are in python. So in the case you need to do batch processing, you can always consult the python files and write your own script.
+
+## Screenshot Verification
+
+The screenshot verification workflow allows you to capture screenshots of web pages and verify their appearance using LLMs. The following tools are available:
+
+1. Screenshot Capture:
+```bash
+venv/bin/python tools/screenshot_utils.py URL [--output OUTPUT] [--width WIDTH] [--height HEIGHT]
+```
+
+2. LLM Verification with Images:
+```bash
+venv/bin/python tools/llm_api.py --prompt "Your verification question" --provider {openai|anthropic} --image path/to/screenshot.png
+```
+
+Example workflow:
+```python
+from screenshot_utils import take_screenshot_sync
+from llm_api import query_llm
+
+# Take a screenshot
+
+screenshot_path = take_screenshot_sync('https://example.com', 'screenshot.png')
+
+# Verify with LLM
+
+response = query_llm(
+    "What is the background color and title of this webpage?",
+    provider="openai",  # or "anthropic"
+    image_path=screenshot_path
+)
+print(response)
+```
+
+## LLM
+
+You always have an LLM at your side to help you with the task. For simple tasks, you could invoke the LLM by running the following command:
+```
+venv/bin/python ./tools/llm_api.py --prompt "What is the capital of France?" --provider "anthropic"
+```
+
+The LLM API supports multiple providers:
+- OpenAI (default, model: gpt-4o)
+- Azure OpenAI (model: configured via AZURE_OPENAI_MODEL_DEPLOYMENT in .env file, defaults to gpt-4o-ms)
+- DeepSeek (model: deepseek-chat)
+- Anthropic (model: claude-3-sonnet-20240229)
+- Gemini (model: gemini-pro)
+- Local LLM (model: Qwen/Qwen2.5-32B-Instruct-AWQ)
+
+But usually it's a better idea to check the content of the file and use the APIs in the `tools/llm_api.py` file to invoke the LLM if needed.
+
+## Web browser
+
+You could use the `tools/web_scraper.py` file to scrape the web.
+```
+venv/bin/python ./tools/web_scraper.py --max-concurrent 3 URL1 URL2 URL3
+```
+This will output the content of the web pages.
+
+## Search engine
+
+You could use the `tools/search_engine.py` file to search the web.
+```
+venv/bin/python ./tools/search_engine.py "your search keywords"
+```
+This will output the search results in the following format:
+```
+URL: https://example.com
+Title: This is the title of the search result
+Snippet: This is a snippet of the search result
+```
+If needed, you can further use the `web_scraper.py` file to scrape the web page content.
+
+# Lessons
+
+## Stable Release Documentation - v1.7.1 (April 19, 2025)
+
+### Release Details
+- Commit Hash: 2be7eabffb9538a639bab47c285394c1e5b54d18
+- Author: kwikkash10
+- Timestamp: Sat Apr 19 15:37:41 2025 +0100
+- Commit Message: Fix: Enhance currency detection and update chat widget links to proper URLs
+- Branch Name: stable/v1.7.0
+- Tag Name: v1.7.1
+- Pull Request: https://github.com/KwikKash10/checkout/pull/9
+
+### Key Changes
+1. Enhanced currency detection:
+   - Implemented retry mechanism with exponential backoff
+   - Added multiple IP geolocation services for redundancy
+   - Added timeout mechanisms to prevent API call hanging
+   - Implemented more robust fallback strategies
+   - Improved local storage caching with 24-hour expiry
+
+2. Updated chat widget links:
+   - Converted buttons to proper anchor tags in ChatWidgetAdapter.tsx and PageExtras.tsx
+   - Added appropriate URLs for support and FAQ pages
+   - Maintained consistent styling across components
+
+## Current Task: Fix Failed to Fetch Error in Currency Detection
+
+[X] Fix the "Failed to fetch" error in checkout.tsx detectUserCurrency function
+- Added retry mechanism with exponential backoff
+- Implemented multiple IP geolocation services
+- Added 3-second timeout for API calls
+
+[X] Implement a timeout mechanism to prevent the API call from hanging
+- Used AbortController with 3-second timeout
+- Applied timeout to all API calls
+
+[X] Add localStorage caching to reduce API calls and provide a fallback
+- Added timestamp-based caching (24-hour expiry)
+- Validates cached currency codes
+- Won't cache failed attempts
+
+[X] Improve error handling to ensure the UI doesn't break if the API fails
+- Added multiple fallback strategies:
+  1. IP geolocation (with multiple services)
+  2. Browser locale detection
+  3. Timezone-based detection
+  4. Default to USD as final fallback
+- Enhanced error logging
+- Graceful degradation through fallbacks
+
+Note: There are some linter errors in the amount conversion logic section of checkout.tsx that should be addressed separately.
+
+## Current Task: Update Chat Widget Links
+
+[X] Update links in ChatWidgetAdapter.tsx
+- Converted buttons to anchor tags
+- Added proper URLs for support and FAQ pages
+- Maintained existing styling
+
+[X] Update links in PageExtras.tsx
+- Converted buttons to anchor tags
+- Added same URLs for consistency
+- Preserved styling and layout
+- Added inline-block and text-center classes for proper link display
+
+## Previous Task: Update Price IDs
+
+[X] Update price IDs in src/pages/api/create-checkout-session.js
+[X] Update price IDs in netlify/functions/create-checkout-session.js
+[X] Update price IDs in stripe-check.js for verification
+[X] Clean up checkout links in src/pages/checkout.tsx (removed hash fragments)
+
+## Previous Task: Deploy to Netlify
+
+[X] Fix build errors - Resolved type issue with process.env.NODE_ENV by adding type assertion
+[X] Update netlify.toml configuration - Changed publish directory from "out" to ".next"
+[X] Deploy to Netlify using Netlify CLI - Successfully deployed to checkout.getino.app
+[X] Fix index.tsx to directly render CheckoutPage without redirection
+[X] Create missing _document.tsx file to fix build errors
+
+## Lessons
+- When making external API calls in React components, always implement:
+  1. Timeout mechanisms using AbortController to prevent hangs (e.g., `setTimeout(() => controller.abort(), 3000)`)
+  2. Local storage caching to reduce API calls and provide fallbacks
+  3. Multiple fallback strategies (like browser locale detection if geolocation API fails)
+  4. Error boundaries so the UI doesn't break if the API is unavailable
+- When working with process.env values in TypeScript with Next.js, you may need to add type assertions
+  to avoid type comparison errors (e.g., `process.env.NODE_ENV as string === 'production'`)
+- Next.js applications deployed to Netlify should use ".next" as the publish directory when using
+  the @netlify/plugin-nextjs plugin
+- Always create a _document.tsx file for Next.js projects to avoid build errors
+- For SEO and clean URLs, rendering content directly on index.tsx is better than using client-side redirects
+- When updating Stripe price IDs, make sure to update all references in:
+  1. API routes that create checkout sessions (Vercel & Netlify functions)
+  2. Utility scripts like stripe-check.js used for verification
+  3. Any hardcoded checkout links in the frontend
+- For Safari/Apple icons, use the high-resolution favicon PNG (favicon-512x512.png) as the source
+  and resize it for all required Apple Touch icon sizes. This ensures visual consistency across
+  different icon sets.
