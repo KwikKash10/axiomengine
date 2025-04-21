@@ -88,6 +88,28 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
 
 # Lessons
 
+## Stable Release Documentation - v1.7.1 (April 22, 2025)
+
+### Release Details
+- Commit Hash: 8dc3199f9b1dbef7c6a74c6e3a80b82a9e6b9d38
+- Author: KwikKash10
+- Timestamp: Mon Apr 22 21:45:21 2025 +0100
+- Commit Message: Fix: Enhanced favicon and Safari pinned tab icon
+- Branch Name: stable/v1.7.0
+- Tag Name: v1.7.1
+- Pull Request: https://github.com/KwikKash10/checkout/pull/10
+
+### Key Changes
+1. Enhanced favicon appearance:
+   - Adjusted icon to properly touch the viewbox borders without being cut off
+   - Ensured consistent blue background color (#282958) in browser tabs
+   - Fixed icon rendering across all major browsers
+
+2. Fixed Safari Pinned Tab Icon:
+   - Updated to use transparent background with black silhouette as required by Safari
+   - Fixed padding to prevent content from extending outside the viewbox
+   - Improved masking for Safari pinned tab feature
+
 ## Stable Release Documentation - v1.7.1 (April 19, 2025)
 
 ### Release Details
@@ -186,3 +208,9 @@ Note: There are some linter errors in the amount conversion logic section of che
 - For Safari/Apple icons, use the high-resolution favicon PNG (favicon-512x512.png) as the source
   and resize it for all required Apple Touch icon sizes. This ensures visual consistency across
   different icon sets.
+- For Safari pinned tab icons, always use a black icon with transparent background, as Safari requires a
+  silhouette/mask approach for its pinned tab UI system.
+- When modifying favicon.ico files, remember that larger sizes (256x256+) are stored as PNG format within 
+  the ICO container for better quality and efficiency.
+- When adjusting favicons to touch the viewbox borders, use precise zoom percentages (104-110% range) to
+  avoid cutting off parts of the icon while still filling the space appropriately.
