@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const dynamicConfig = require('./dynamic.config.js');
+
 const nextConfig = {
   reactStrictMode: true,
   // swcMinify is not recognized in Next.js 15
@@ -16,14 +18,6 @@ const nextConfig = {
     // We'll handle ESLint errors in development
     ignoreDuringBuilds: true
   },
-  // Enable HTTPS in development with proper configuration
-  webpackDevMiddleware: config => {
-    config.watchOptions = {
-      poll: 1000,
-      aggregateTimeout: 300,
-    }
-    return config
-  },
   // Ensure Stripe.js loads properly
   webpack: (config) => {
     config.resolve.fallback = { 
@@ -32,6 +26,18 @@ const nextConfig = {
       path: false 
     };
     return config;
+  },
+  // Only export API routes as serverless, render all other routes on client
+  exportPathMap: async function (defaultPathMap, { dev, dir, outDir, distDir, buildId }) {
+    // Filter out dynamic routes
+    const filteredPathMap = {};
+    for (const [path, page] of Object.entries(defaultPathMap)) {
+      // Skip dynamic routes that require client-side rendering
+      if (!dynamicConfig.dynamicRoutes.includes(path)) {
+        filteredPathMap[path] = page;
+      }
+    }
+    return filteredPathMap;
   }
 };
 

@@ -5,23 +5,33 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 
-export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter();
+// Fix for server-side rendering with React context
+function SafeHydrate({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
-
+  
   useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  return (
+    <div suppressHydrationWarning>
+      {isClient ? children : <div style={{ visibility: 'hidden' }}>Loading...</div>}
+    </div>
+  );
+}
+
+export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter();
 
   return (
-    <AuthProvider>
-      <Head>
-        <title>SECURE CHECKOUT</title>
-        <meta name="description" content="Secure payment processing for your order" />
-      </Head>
-      {(!router.pathname.includes('/embedded-checkout') || isClient) && (
+    <SafeHydrate>
+      <AuthProvider>
+        <Head>
+          <title>SECURE CHECKOUT</title>
+          <meta name="description" content="Secure payment processing for your order" />
+        </Head>
         <Component {...pageProps} />
-      )}
-    </AuthProvider>
+      </AuthProvider>
+    </SafeHydrate>
   );
 } 
