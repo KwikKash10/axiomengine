@@ -282,3 +282,27 @@ Note: There are some linter errors in the amount conversion logic section of che
   ```
 - This is especially important for PayPal integration which requires all address fields
 - For payment methods that need complete billing details, consider using 'auto' instead of 'never' in fields configuration
+
+## Stable Release Documentation - v1.7.2 (April 22, 2025)
+
+### Release Details
+- Commit Hash: 3b0b934682a4d5375d07c87b84d10ce4598a1da0
+- Author: KwikKash10
+- Timestamp: Tue Apr 22 23:00:45 BST 2025
+- Commit Message: Fix: Stripe.js loading error and PayPal integration error
+- Branch Name: stable/v1.7.1
+- Tag Name: v1.7.2
+- Pull Request: https://github.com/KwikKash10/checkout/pull/11
+
+### Key Changes
+1. Fixed Stripe.js loading error:
+   - Added Stripe.js script directly in _document.tsx to ensure it loads before any React components
+   - Used async attribute to prevent blocking page rendering
+   - Added graceful error handling for Stripe initialization failures
+   - Created isStripeLoaded helper function to check Stripe availability
+
+2. Fixed PayPal integration error:
+   - Resolved IntegrationError with PaymentElement billing_details
+   - Added required billing details in stripe.confirmPayment calls
+   - Provided default values for billing_details.address fields (city, line1, line2)
+   - Applied fix across all payment pages
