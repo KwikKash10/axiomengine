@@ -42,7 +42,8 @@ exports.handler = async (event, context) => {
     const metadata = {};
     
     if (planType) {
-      metadata.planType = planType;
+      const sanitizedPlanType = planType.toLowerCase().trim();
+      metadata.planType = sanitizedPlanType;
       
       // Add product IDs based on plan type
       const productIds = {
@@ -51,21 +52,35 @@ exports.handler = async (event, context) => {
         monthly: 'prod_S4n8GRGIBAlcmW',
       };
       
-      if (planType in productIds) {
-        metadata.productId = productIds[planType];
+      if (sanitizedPlanType in productIds) {
+        metadata.productId = productIds[sanitizedPlanType];
       }
     }
 
+    // Ensure amount is a clean number
+    const sanitizedAmount = parseInt(convertedAmount, 10);
+    if (isNaN(sanitizedAmount) || sanitizedAmount <= 0) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid amount value' }),
+      };
+    }
+
+    // Sanitize currency
+    const sanitizedCurrency = userCurrency.toUpperCase().trim();
+
+    console.log('Creating payment intent with amount:', sanitizedAmount, 'currency:', sanitizedCurrency);
+
     // Create the payment intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: parseInt(convertedAmount, 10),
-      currency: userCurrency.toLowerCase(),
+      amount: sanitizedAmount,
+      currency: sanitizedCurrency,
       automatic_payment_methods: {
         enabled: true,
       },
       metadata,
       description: planType 
-        ? `Payment for ${planType} plan` 
+        ? `Payment for ${planType.toLowerCase().trim()} plan` 
         : 'Payment',
     });
 

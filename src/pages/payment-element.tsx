@@ -50,6 +50,15 @@ function CheckoutForm({ onSuccess }: { onSuccess: () => void }) {
       elements,
       confirmParams: {
         return_url: window.location.origin + '/success?source=payment_element',
+        payment_method_data: {
+          billing_details: {
+            address: {
+              city: "Not provided",
+              line1: "Not provided",
+              line2: "Not provided"
+            }
+          }
+        }
       },
       redirect: 'if_required',
     });
@@ -76,15 +85,15 @@ function CheckoutForm({ onSuccess }: { onSuccess: () => void }) {
             fields: {
               billingDetails: {
                 name: 'auto',
-                email: 'never',
-                phone: 'never',
+                email: 'auto',
+                phone: 'auto',
                 address: {
                   country: 'auto',
                   postalCode: 'auto',
                   line1: 'never',
                   line2: 'never',
                   city: 'never',
-                  state: 'never',
+                  state: 'auto',
                 }
               }
             },

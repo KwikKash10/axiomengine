@@ -347,6 +347,15 @@ function CheckoutForm({ planType, onSwitchToRedirect, formattedPrice }: { planTy
       elements,
       confirmParams: {
         return_url: window.location.origin + '/success?plan=' + planType.toLowerCase(),
+        payment_method_data: {
+          billing_details: {
+            address: {
+              city: "Not provided", // Provide a default value since we set city to 'never'
+              line1: "Not provided", // Provide a default value since we set line1 to 'never'
+              line2: "Not provided"  // Provide a default value since we set line2 to 'never'
+            }
+          }
+        }
       },
       redirect: 'if_required',
     });

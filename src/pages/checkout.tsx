@@ -307,16 +307,25 @@ const CHECKOUT_LINKS = {
   lifetime: 'https://checkout.stripe.com/c/pay/cs_live_a1jYUJpRZoOxKrAMNfhJtL2GLWlxVVXZPQZBGFHSWRYBYQDGGKDR4Jq5Hs'
 };
 
-// Initialize Stripe
+// Initialize Stripe with better error handling
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
   apiVersion: '2023-10-16', // Specify the latest API version
   stripeAccount: process.env.NEXT_PUBLIC_STRIPE_ACCOUNT_ID, // Optional: if using Connect
+}).catch(err => {
+  console.error('Failed to initialize Stripe:', err);
+  // Return null to handle the error gracefully in components
+  return null;
 });
 
 // Add this check for development environment
 if (process.env.NODE_ENV === 'development') {
   console.warn('Running in development mode - ensure HTTPS is enabled for Stripe.js');
 }
+
+// Add a helper function to check if Stripe is loaded
+const isStripeLoaded = () => {
+  return typeof window !== 'undefined' && window.Stripe !== undefined;
+};
 
 // CheckoutForm component for embedded payment
 function CheckoutForm({ planType, onSwitchToRedirect, formattedPrice }: { planType: string; onSwitchToRedirect: () => void; formattedPrice: string }) {
@@ -325,6 +334,13 @@ function CheckoutForm({ planType, onSwitchToRedirect, formattedPrice }: { planTy
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentMethodTypes, setPaymentMethodTypes] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Check if Stripe failed to load and show error message
+    if (!isStripeLoaded() && !stripe) {
+      setErrorMessage('Payment system failed to load. Please refresh the page or try again later.');
+    }
+  }, [stripe]);
 
   useEffect(() => {
     if (elements) {
@@ -355,6 +371,15 @@ function CheckoutForm({ planType, onSwitchToRedirect, formattedPrice }: { planTy
       elements,
       confirmParams: {
         return_url: window.location.origin + '/success?plan=' + planType.toLowerCase(),
+        payment_method_data: {
+          billing_details: {
+            address: {
+              city: "Not provided", // Provide a default value since we set city to 'never'
+              line1: "Not provided", // Provide a default value since we set line1 to 'never'
+              line2: "Not provided"  // Provide a default value since we set line2 to 'never'
+            }
+          }
+        }
       },
       redirect: 'if_required',
     });
@@ -382,15 +407,15 @@ function CheckoutForm({ planType, onSwitchToRedirect, formattedPrice }: { planTy
           fields: {
             billingDetails: {
               name: 'auto',
-              email: 'never',
-              phone: 'never',
+              email: 'auto',
+              phone: 'auto',
               address: {
                 country: 'auto',
                 postalCode: 'auto',
                 line1: 'never',
                 line2: 'never',
                 city: 'never',
-                state: 'never',
+                state: 'auto',
               }
             }
           },
@@ -409,11 +434,29 @@ function CheckoutForm({ planType, onSwitchToRedirect, formattedPrice }: { planTy
         </div>
       )}
 
-      <div className="flex flex-col space-y-4 mt-6">
+      <div className="flex flex-col space-y-4 mt-6 items-center">
+        {/* Save information checkbox - center-aligned */}
+        <div className="mb-2 max-w-md w-full flex justify-center">
+          <div className="flex items-start">
+            <input
+              id="saveInfo"
+              name="saveInfo"
+              type="checkbox"
+              className="w-4 h-4 mt-1 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <div className="ml-2">
+              <label htmlFor="saveInfo" className="text-gray-700 font-medium text-sm">
+                Securely save my information for 1-click checkout
+              </label>
+              <p className="text-gray-500 text-sm">Pay faster on Getino App and everywhere Link is accepted.</p>
+            </div>
+          </div>
+        </div>
+        
         <button
           type="submit"
           disabled={!stripe || isProcessing}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="max-w-md w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isProcessing ? (
             <div className="flex items-center justify-center">
@@ -430,14 +473,31 @@ function CheckoutForm({ planType, onSwitchToRedirect, formattedPrice }: { planTy
             </div>
           )}
         </button>
+
+        {/* Additional subscription information */}
+        <div className="text-center mt-4 space-y-2 max-w-md w-full">
+          <p className="text-gray-500 text-xs mt-2">
+            By confirming your subscription, you allow Getino App to charge your card for future payments in accordance with their terms.
+            You can always cancel your subscription.
+          </p>
+        </div>
         
-        <button
-          type="button"
-          onClick={handleRedirectCheckout}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium text-center w-full"
-        >
-          Need a different way to checkout?
-        </button>
+        {/* Powered by Stripe section */}
+        <div className="text-center max-w-md w-full mt-4 space-y-2">
+          <div className="flex items-center justify-center text-gray-500 text-sm">
+            Powered by
+            <img 
+              src="/security badges/Stripe 2014.png" 
+              alt="Stripe" 
+              className="ml-1 h-6" 
+            />
+          </div>
+          
+          <div className="flex justify-center space-x-4 text-gray-500 text-sm font-medium">
+            <a href="https://stripe.com/legal" className="hover:text-gray-700">Terms</a>
+            <a href="https://stripe.com/privacy" className="hover:text-gray-700">Privacy</a>
+          </div>
+        </div>
       </div>
     </form>
   );
@@ -668,6 +728,7 @@ export default function CheckoutPage() {
   const groupRefs = useRef<Record<string, HTMLDivElement | null>>({});
   // Add a state to track payment form loading
   const [paymentFormLoading, setPaymentFormLoading] = useState(false);
+  const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
 
   const plan = searchParams.get('plan') as 'monthly' | 'yearly' | 'lifetime' | null;
   const couponCode = searchParams.get('coupon') || '';
@@ -1034,123 +1095,133 @@ export default function CheckoutPage() {
   
       // Call appropriate API based on payment method
       const endpoint = forceRedirect ? '/api/create-checkout-session' : '/api/create-payment-intent';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(checkoutData),
-      });
-  
-      // Check if response is OK
-      if (!response.ok) {
-        const errorStatus = response.status;
-        let errorText = '';
-        
-        try {
-          errorText = await response.text();
-        } catch (e) {
-          errorText = 'Unable to read error response';
-        }
-        
-        console.error(`Error response from server: ${errorStatus}`, errorText);
-        throw new Error(`Server returned ${errorStatus}: ${errorText.substring(0, 100)}`);
-      }
       
-      // Try to parse JSON response
-      let responseData;
       try {
-        responseData = await response.json();
-      } catch (error) {
-        const responseText = await response.text();
-        console.error('Invalid JSON response:', responseText.substring(0, 100) + '...');
-        throw new Error(`Server returned invalid JSON: ${responseText.substring(0, 100)}...`);
-      }
-  
-      // Log if we're getting mock data (for local testing)
-      if (responseData.isMockData) {
-        console.log('Using mock checkout data for local development');
-        setSuccessMessage('Mock checkout - In production, you would be redirected to Stripe');
-        // Optional: simulate delay and show success message for testing
-        setTimeout(() => {
-          setLoading(false);
-          // Mock successful checkout
-          router.push('/success?session_id=' + responseData.sessionId + '&plan=' + selectedPlan.toLowerCase());
-        }, 2000);
-        return;
-      }
-  
-      // Track checkout initiation (for analytics - if you have analytics set up)
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'begin_checkout', {
-          currency: 'USD',
-          value: selectedPlan === 'monthly' ? 14.99 : selectedPlan === 'yearly' ? 49 : 99,
-          items: [{
-            id: selectedPlan.toLowerCase(),
-            name: `${selectedPlan} Plan`,
-            quantity: 1
-          }]
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(checkoutData),
         });
-      }
-  
-      if (forceRedirect) {
-        // Handle redirect to Stripe Checkout
-        if (responseData.url) {
-          console.log('Redirecting to Stripe URL:', responseData.url);
-          window.location.href = responseData.url;
-          return;
+    
+        // Check if response is OK
+        if (!response.ok) {
+          const errorStatus = response.status;
+          let errorText = '';
+          
+          try {
+            errorText = await response.text();
+          } catch (e) {
+            errorText = 'Unable to read error response';
+          }
+          
+          console.error(`Error response from server: ${errorStatus}`, errorText);
+          
+          // Handle 404 errors specially (missing API route)
+          if (errorStatus === 404) {
+            setError('Payment service unavailable. Please try the redirect checkout option instead.');
+            setErrorDetails(`API endpoint not found: ${endpoint}`);
+            // Automatically try redirect checkout after a brief delay
+            setTimeout(() => {
+              if (forceRedirect === false) {
+                handleCheckout(true);
+              }
+            }, 1000);
+            setLoading(false);
+            return;
+          }
+          
+          throw new Error(`Server returned ${errorStatus}: ${errorText.substring(0, 100)}`);
         }
         
-        // Fallback to session ID if URL not provided
-        if (!responseData.sessionId) {
-          console.error('Missing sessionId in response:', responseData);
-          throw new Error('Missing session ID in response');
+        // Try to parse JSON response
+        let responseData;
+        try {
+          responseData = await response.json();
+        } catch (error) {
+          const responseText = await response.text();
+          console.error('Invalid JSON response:', responseText.substring(0, 100) + '...');
+          throw new Error(`Server returned invalid JSON: ${responseText.substring(0, 100)}...`);
         }
     
-        // Redirect to checkout using session ID
-        const stripeUrl = `https://checkout.stripe.com/c/pay/${responseData.sessionId}`;
-        console.log('Redirecting to Stripe:', stripeUrl);
-        window.location.href = stripeUrl;
-      } else {
-        // Set the client secret for the embedded form
-        if (responseData.clientSecret) {
-          console.log('Client secret received:', responseData.clientSecret.substring(0, 10) + '...');
-          setClientSecret(responseData.clientSecret);
-          
-          // Add a delay to allow Stripe to fully initialize payment methods
+        // Log if we're getting mock data (for local testing)
+        if (responseData.isMockData) {
+          console.log('Using mock checkout data for local development');
+          setSuccessMessage('Mock checkout - In production, you would be redirected to Stripe');
+          // Optional: simulate delay and show success message for testing
           setTimeout(() => {
-            setPaymentFormLoading(false);
-          }, 1000);
+            setLoading(false);
+            // Mock successful checkout
+            router.push('/success?session_id=' + responseData.sessionId + '&plan=' + selectedPlan.toLowerCase());
+          }, 2000);
+          return;
+        }
+    
+        // Track checkout initiation (for analytics - if you have analytics set up)
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('event', 'begin_checkout', {
+            currency: 'USD',
+            value: selectedPlan === 'monthly' ? 14.99 : selectedPlan === 'yearly' ? 49 : 99,
+            items: [{
+              id: selectedPlan.toLowerCase(),
+              name: `${selectedPlan} Plan`,
+              quantity: 1
+            }]
+          });
+        }
+    
+        if (forceRedirect) {
+          // Handle redirect to Stripe Checkout
+          if (responseData.url) {
+            console.log('Redirecting to Stripe URL:', responseData.url);
+            window.location.href = responseData.url;
+            return;
+          }
+          
+          // Fallback to session ID if URL not provided
+          if (!responseData.sessionId) {
+            console.error('Missing sessionId in response:', responseData);
+            throw new Error('Missing session ID in response');
+          }
+      
+          // Redirect to checkout using session ID
+          const stripeUrl = `https://checkout.stripe.com/c/pay/${responseData.sessionId}`;
+          console.log('Redirecting to Stripe:', stripeUrl);
+          window.location.href = stripeUrl;
         } else {
-          console.error('No client secret in response:', responseData);
-          setPaymentFormLoading(false);
-          throw new Error('No client secret received from the server');
+          // Set the client secret for the embedded form
+          if (responseData.clientSecret) {
+            console.log('Client secret received:', responseData.clientSecret.substring(0, 10) + '...');
+            setClientSecret(responseData.clientSecret);
+            
+            // Add a delay to allow Stripe to fully initialize payment methods
+            setTimeout(() => {
+              setPaymentFormLoading(false);
+              setLoading(false);
+            }, 1000);
+          } else {
+            throw new Error('Missing client secret in response');
+          }
+        }
+      } catch (fetchError) {
+        console.error('Fetch error:', fetchError);
+        setError(fetchError.message || 'Error processing payment. Please try again.');
+        setErrorDetails(fetchError.toString());
+        // Fallback to redirect checkout if embedded checkout fails
+        if (!forceRedirect) {
+          console.log('Falling back to redirect checkout due to error');
+          setTimeout(() => {
+            handleCheckout(true);
+          }, 2000);
+        } else {
+          setLoading(false);
         }
       }
     } catch (error) {
-      console.error('Checkout error:', error);
-      let errorMessage = 'Error creating checkout session';
-      
-      // Try to extract more detailed error from the response
-      if (error.message && error.message.includes('Server returned 500')) {
-        try {
-          // Extract the JSON error message from the error string
-          const jsonStart = error.message.indexOf('{');
-          const jsonEnd = error.message.lastIndexOf('}') + 1;
-          const errorJson = error.message.substring(jsonStart, jsonEnd);
-          const errorObj = JSON.parse(errorJson);
-          
-          errorMessage = errorObj.message || errorMessage;
-          console.error('Extracted API error:', errorObj);
-        } catch (e) {
-          console.error('Error parsing API error:', e);
-        }
-      }
-      
-      setError('Error creating checkout session');
-      setErrorDetails(errorMessage || error.message || 'Unknown error occurred');
-      setPaymentFormLoading(false);
-    } finally {
+      console.error('Error in handleCheckout:', error);
+      setError(error.message || 'An unexpected error occurred. Please try again.');
+      setErrorDetails(error.toString());
       setLoading(false);
     }
   };
@@ -1361,10 +1432,18 @@ export default function CheckoutPage() {
       answer: "The 14-day free trial includes all premium features, giving you full access to test everything the platform has to offer."
     },
     {
+      question: "Do you have a refund policy?",
+      answer: (
+        <>
+          Yes! We offer a 30-day refund incentive on all plans. If you're not completely satisfied with your purchase, open a support ticket with your invoice ID. Your satisfaction is our top priority.
+        </>
+      )
+    },
+    {
       question: "Can I switch plans later?",
       answer: (
         <>
-          Yes, you can upgrade or downgrade your plan at any time. Changes will take effect at the start of your next billing cycle. If you need assistance with your subscription plan, contact the support team.
+          You can upgrade or downgrade your plan at any time. Changes will take effect at the start of your next billing cycle. If you need assistance with your subscription plan, contact the support team.
         </>
       )
     },
@@ -1726,7 +1805,6 @@ export default function CheckoutPage() {
                         </dl>
                       </div>
 
-                      {/* Payment form */}
                       {clientSecret && (
                         <div className="mt-6">
                           {paymentFormLoading ? (
@@ -1742,7 +1820,7 @@ export default function CheckoutPage() {
                                   appearance: { 
                                     theme: 'stripe',
                                     variables: {
-                                      colorPrimary: '#0cc471',
+                                      colorPrimary: '#4F46E5',
                                       colorBackground: '#ffffff',
                                       colorText: '#1F2937',
                                       fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
@@ -1756,14 +1834,64 @@ export default function CheckoutPage() {
                                 <CheckoutForm planType={selectedPlan || 'lifetime'} onSwitchToRedirect={() => handleCheckout(true)} formattedPrice={planDetails.price} />
                               </Elements>
                               
-                              {/* Payment options help message */}
-                              <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-md">
-                                <p className="text-xs text-blue-800 flex items-start">
-                                  <FiInfo className="flex-shrink-0 h-4 w-4 mr-2 mt-0.5" />
-                                  <span>
-                                    <strong>Can't see multiple payment options?</strong> Some payment methods may not be available in your region or with your selected currency. Try refreshing the checkout session, changing currency, switching to desktop view, or using a different browser. Credit card payments and 'Pay with Link' are always available.
-                                  </span>
-                                </p>
+                              {/* More options dropdown */}
+                              <div className="flex flex-col space-y-4 mt-4 items-center">
+                                <div className="max-w-md w-full">
+                                  <button
+                                    type="button"
+                                    onClick={() => setMoreOptionsOpen(!moreOptionsOpen)}
+                                    className="text-[#4f46e6] hover:text-[#4338ca] text-sm font-medium flex items-center"
+                                  >
+                                    More options
+                                    <FiChevronDown className={`ml-1 transition-transform ${moreOptionsOpen ? 'rotate-180' : ''}`} />
+                                  </button>
+                                  
+                                  {moreOptionsOpen && (
+                                    <div className="mt-4 transition-all duration-200 ease-in-out">
+                                      {/* Payment options help message */}
+                                      <div className="p-3 -mx-10 bg-indigo-50 border border-indigo-100 rounded-md mb-2">
+                                        <p className="text-xs text-[#4f46e6] flex items-start">
+                                          <FiInfo className="flex-shrink-0 h-4 w-4 mr-2 mt-0.5" />
+                                          <span>
+                                            <strong className="block mb-1">Can't see multiple payment options?</strong>
+                                            Some payment methods may not be available in your region or with your selected currency. Try refreshing the checkout session, changing currency, switching to desktop view, or using a different browser. Credit card payments and 'Pay with Link' are always available.
+                                          </span>
+                                        </p>
+                                      </div>
+                                      
+                                      {/* Need a different way to checkout? button */}
+                                      <div className="flex justify-center w-full relative">
+                                        <div className="flex items-center">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleCheckout(true)}
+                                            className="text-[#4f46e6] hover:text-[#4338ca] text-sm font-medium py-2"
+                                          >
+                                            Need a different way to checkout?
+                                          </button>
+                                          
+                                          {userCurrency !== 'USD' && (
+                                            <div className="relative">
+                                              <div className="group cursor-help">
+                                                <FiInfo className="h-3 w-3 text-[#4f46e6] hover:text-[#4338ca] ml-1 relative -top-1" />
+                                                <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
+                                                  <div className="p-2.5 rounded-md shadow-md" style={{ backgroundColor: 'rgba(238, 242, 255, 0.7)', borderColor: 'rgba(224, 231, 255, 0.7)' }}>
+                                                    <p className="text-xs text-[#4f46e6]">
+                                                      Prices are shown in {userCurrency} for your convenience. The payment will be shown in USD and auto-converted to the selected currency by the payment processor.
+                                                    </p>
+                                                  </div>
+                                                  <div className="w-3 h-3 border-r border-b absolute -bottom-1.5 left-1/2 -translate-x-1/2 transform rotate-45" style={{ backgroundColor: 'rgba(238, 242, 255, 0.7)', borderColor: 'rgba(224, 231, 255, 0.7)' }}></div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Currency Conversion Notice - Removed static box */}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </>
                           )}
@@ -1780,35 +1908,35 @@ export default function CheckoutPage() {
                   </h3>
                   <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-4 relative h-14"> {/* Increased height to accommodate animation */}
                     {/* Center card (Discover) */}
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 z-10 transition-all duration-200 hover:scale-105 hover:z-50" style={{ '--center-offset-x': '24px' } as React.CSSProperties}>
+                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 z-10 transition-transform duration-300 ease-out hover:scale-110 hover:z-50" style={{ '--center-offset-x': '24px' } as React.CSSProperties}>
                       <img src="/secure payment methods/discover.svg" alt="Discover" className="h-6 sm:h-8 rounded-md animate-slide-in-center" style={{ animationDelay: '0s' }} />
                     </div>
                     
                     {/* Left side cards */}
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105 hover:z-50 invisible" style={{ '--offset-x': '220px' } as React.CSSProperties}>
+                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '220px' } as React.CSSProperties}>
                       <img src="/secure payment methods/visa.svg" alt="Visa" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.1s' }} />
                     </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105 hover:z-50 invisible" style={{ '--offset-x': '165px' } as React.CSSProperties}>
+                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '165px' } as React.CSSProperties}>
                       <img src="/secure payment methods/mastercard.svg" alt="Mastercard" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.3s' }} />
                     </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105 hover:z-50 invisible" style={{ '--offset-x': '110px' } as React.CSSProperties}>
+                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '110px' } as React.CSSProperties}>
                       <img src="/secure payment methods/maestro.svg" alt="Maestro" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.5s' }} />
                     </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105 hover:z-50 invisible" style={{ '--offset-x': '55px' } as React.CSSProperties}>
+                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '55px' } as React.CSSProperties}>
                       <img src="/secure payment methods/amex.svg" alt="American Express" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.7s' }} />
                     </div>
                     
                     {/* Right side cards */}
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105 hover:z-50 invisible" style={{ '--offset-x': '55px' } as React.CSSProperties}>
+                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '55px' } as React.CSSProperties}>
                       <img src="/secure payment methods/diners.svg" alt="Diners Club" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.7s' }} />
                     </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105 hover:z-50 invisible" style={{ '--offset-x': '110px' } as React.CSSProperties}>
+                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '110px' } as React.CSSProperties}>
                       <img src="/secure payment methods/cartes-bancaires.svg" alt="Cartes Bancaires" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.5s' }} />
                     </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105 hover:z-50 invisible" style={{ '--offset-x': '165px' } as React.CSSProperties}>
+                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '165px' } as React.CSSProperties}>
                       <img src="/secure payment methods/apple-pay.svg" alt="Apple Pay" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.3s' }} />
                     </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-105 hover:z-50 invisible" style={{ '--offset-x': '220px' } as React.CSSProperties}>
+                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '220px' } as React.CSSProperties}>
                       <img src="/secure payment methods/google-pay.svg" alt="Google Pay" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.1s' }} />
                     </div>
                   </div>
@@ -2144,7 +2272,7 @@ export default function CheckoutPage() {
                                   <>"<strong>Best investment this year</strong>. The opportunities are high-quality and the support is excellent."</>
                                 }
                                 {testimonial.name === "Michael T." && 
-                                  <>"The premium features are definitely worth it! I've <strong>found incredible opportunities</strong> that have helped me earn while studying."</>
+                                  <>"The premium features are definitely worth it! I've found incredible opportunities that have helped me earn while studying."</>
                                 }
                                 {testimonial.name === "Sarah J." && 
                                   <>"<strong>Made $2,000 in my first month!</strong> The opportunities are high-quality and legitimate."</>

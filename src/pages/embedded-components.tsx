@@ -72,6 +72,15 @@ function CheckoutForm({ planType }: { planType: string }) {
       confirmParams: {
         // Make sure to change this to your payment completion page
         return_url: `${window.location.origin}/success?plan=${planType}`,
+        payment_method_data: {
+          billing_details: {
+            address: {
+              city: "Not provided",
+              line1: "Not provided",
+              line2: "Not provided"
+            }
+          }
+        }
       },
     });
 

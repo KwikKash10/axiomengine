@@ -2,7 +2,7 @@ const Stripe = require('stripe');
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2025-03-31.basil',
 });
 
 exports.handler = async (event, context) => {
@@ -39,68 +39,85 @@ exports.handler = async (event, context) => {
       };
     }
     
-    // Set the line items based on plan type with dynamic currency
+    // Sanitize inputs
+    const sanitizedPlanType = planType.toLowerCase().trim();
+    const sanitizedCurrency = userCurrency.toUpperCase().trim();
+    
+    // Product names and descriptions based on plan type
+    const productDetails = {
+      lifetime: {
+        name: 'Getino Lifetime',
+        description: 'Lifetime access to Getino Premium'
+      },
+      yearly: {
+        name: 'Getino Premium - Yearly',
+        description: 'Annual subscription to Getino Premium'
+      },
+      monthly: {
+        name: 'Getino Premium - Monthly',
+        description: 'Monthly subscription to Getino Premium'
+      },
+      'monthly-yearly': {
+        name: 'Getino Premium - Annual (Monthly Billing)',
+        description: 'Annual subscription with monthly billing'
+      }
+    };
+
+    const productName = productDetails[sanitizedPlanType]?.name || 'Getino Premium';
+    
+    // Use predefined price IDs for upsell functionality
     let lineItems;
-    let mode = 'payment';
-    const productIds = {
-      lifetime: 'prod_S4nB4crsooi2fN',
-      yearly: 'prod_S4nAJKWNYnrZ8C',
-      monthly: 'prod_S4n8GRGIBAlcmW',
+    let mode = sanitizedPlanType === 'lifetime' ? 'payment' : 'subscription';
+    const priceIds = {
+      lifetime: 'price_1RE8O72KitrBpBuO12sd4L3M', // Lifetime plan ($99)
+      yearly: 'price_1RE8Lt2KitrBpBuOYYbxSAKp',   // Yearly plan ($49)
+      monthly: 'price_1RE4uK2KitrBpBuOLcp4UXHX',  // Monthly plan ($14.99)
+      'monthly-yearly': 'price_1RGf3I2KitrBpBuOak7aQHKb', // Monthly billed yearly plan ($49)
     };
     
-    switch (planType) {
+    if (!priceIds[sanitizedPlanType]) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid plan type provided' }),
+      };
+    }
+    
+    // Log currency information for reference but use USD pricing
+    console.log(`Creating ${mode} checkout with reference ${sanitizedCurrency} ${convertedAmount}`);
+
+    // Set up line items with price IDs 
+    switch (sanitizedPlanType) {
       case 'lifetime':
         lineItems = [
           {
-            price_data: {
-              currency: userCurrency.toLowerCase(),
-              product_data: {
-                name: 'Buy Getino Lifetime'
-              },
-              unit_amount: convertedAmount,
-            },
+            price: priceIds.lifetime,
             quantity: 1,
           },
         ];
-        mode = 'payment'; // One-time payment
         break;
       case 'yearly':
         lineItems = [
           {
-            price_data: {
-              currency: userCurrency.toLowerCase(),
-              product_data: {
-                name: 'Subscribe to Getino Pro'
-              },
-              unit_amount: convertedAmount,
-              recurring: {
-                interval: 'year',
-                interval_count: 1,
-              },
-            },
+            price: priceIds.yearly,
             quantity: 1,
           },
         ];
-        mode = 'subscription'; // Recurring payment
         break;
       case 'monthly':
         lineItems = [
           {
-            price_data: {
-              currency: userCurrency.toLowerCase(),
-              product_data: {
-                name: 'Subscribe to Getino Pro'
-              },
-              unit_amount: convertedAmount,
-              recurring: {
-                interval: 'month',
-                interval_count: 1,
-              },
-            },
+            price: priceIds.monthly,
             quantity: 1,
           },
         ];
-        mode = 'subscription'; // Recurring payment
+        break;
+      case 'monthly-yearly':
+        lineItems = [
+          {
+            price: priceIds['monthly-yearly'],
+            quantity: 1,
+          },
+        ];
         break;
       default:
         return {
@@ -109,32 +126,54 @@ exports.handler = async (event, context) => {
         };
     }
 
-    // Add product name for title display in checkout
-    const productName = planType === 'lifetime' ? 'Buy Getino Lifetime' : 'Subscribe to Getino Pro';
-
     // Session parameters
     const origin = event.headers.origin || 'http://localhost:3000';
     const baseSessionParams = {
-      payment_method_types: ['card'],
+      payment_method_types: mode === 'payment' 
+        ? ['card', 'amazon_pay', 'link', 'paypal'] 
+        : ['card', 'amazon_pay', 'link'],
       line_items: lineItems,
       mode,
       billing_address_collection: 'required',
       shipping_address_collection: {
-        allowed_countries: ['US', 'CA', 'GB', 'AU', 'DE', 'FR'],
+        enabled: false
       },
+      // Disable phone number collection to only show email in contact section
       phone_number_collection: {
-        enabled: true,
+        enabled: false,
       },
-      custom_text: {
-        submit: {
-          message: 'We\'ll confirm your payment shortly after submission',
-        },
+      // Disable automatic tax to show subtotal instead
+      automatic_tax: {
+        enabled: false,
+      },
+      tax_id_collection: {
+        enabled: false,
       },
       locale: 'auto',
+      // Make users explicitly select a payment method - only for subscription mode
+      ...(mode === 'subscription' ? { payment_method_collection: 'always' } : {}),
+      // Configure payment method options
+      payment_method_options: {},
+      // Use hosted mode for clean layout
+      ui_mode: 'hosted',
+      // Customize checkout button text
+      custom_text: {
+        submit: {
+          message: 'Pay and subscribe'
+        }
+      },
+      // Add customer email to pre-fill the email field
+      customer_email: JSON.parse(event.body).email || undefined,
       // Add payment intent data for one-time payments
       payment_intent_data: mode === 'payment' ? {
         description: productName
-      } : undefined
+      } : undefined,
+      // Add metadata to track currency and other information
+      metadata: {
+        plan: sanitizedPlanType,
+        currency: sanitizedCurrency,
+        source: event.headers.referer || 'netlify',
+      },
     };
 
     // Add specific params based on checkout type
@@ -145,13 +184,13 @@ exports.handler = async (event, context) => {
       sessionParams = {
         ...baseSessionParams,
         ui_mode: 'embedded',
-        return_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${planType}`,
+        return_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${sanitizedPlanType}`,
       };
     } else {
       sessionParams = {
         ...baseSessionParams,
-        success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${planType}`,
-        cancel_url: `${origin}/form`,
+        success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&plan=${sanitizedPlanType}`,
+        cancel_url: `${origin}/checkout?plan=${sanitizedPlanType}&recovered=true`,
       };
     }
 
@@ -176,7 +215,10 @@ exports.handler = async (event, context) => {
     } else {
       return {
         statusCode: 200,
-        body: JSON.stringify({ sessionId: session.id }),
+        body: JSON.stringify({ 
+          url: session.url,
+          sessionId: session.id 
+        }),
       };
     }
   } catch (error) {

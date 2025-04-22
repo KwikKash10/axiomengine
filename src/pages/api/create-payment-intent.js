@@ -67,7 +67,7 @@ export default async function handler(req, res) {
     }
 
     // Sanitize currency
-    const sanitizedCurrency = userCurrency.toLowerCase().trim();
+    const sanitizedCurrency = userCurrency.toUpperCase().trim();
 
     // Define metadata based on the plan type
     const metadata = {};

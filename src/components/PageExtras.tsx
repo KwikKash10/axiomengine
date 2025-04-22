@@ -105,17 +105,18 @@ const ChatWidgetButton = () => {
       {isChatOpen && (
         <div 
           ref={chatContainerRef}
-          className="fixed right-6 z-[99999] rounded-lg shadow-xl flex flex-col overflow-hidden bg-white bottom-[calc(24px+80px)] w-[85vw] sm:w-[376px]"
+          className="fixed right-6 z-[99999] rounded-lg shadow-xl flex flex-col overflow-hidden bg-white/90 backdrop-blur-sm bottom-[calc(24px+60px)] sm:w-[376px]"
           style={{ 
             height: '60vh',
-            maxHeight: 'calc(100vh - 160px)',
-            right: '0.75rem'
+            width: window.innerWidth <= 640 ? '85vw' : '376px',
+            maxHeight: 'calc(100vh - 140px)',
+            right: '1.5rem'
           }}
         >
           {/* Chat header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <h3 className="font-semibold text-lg text-gray-900">
-              Chat Support
+              Live Chat
             </h3>
             <div className="flex items-center space-x-4">
               <button
@@ -133,7 +134,7 @@ const ChatWidgetButton = () => {
           {/* Chat body */}
           <div className="flex-1 flex flex-col p-4">
             <div className="text-center py-8">
-              <h3 className="text-lg font-semibold mb-2">Welcome to Get Paid App Support</h3>
+              <h3 className="text-lg font-semibold mb-2">Welcome to Getino Live Support</h3>
               <p className="text-gray-600 mb-4">How can we help you today?</p>
               
               <div className="space-y-4">

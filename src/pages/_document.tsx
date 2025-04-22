@@ -6,6 +6,9 @@ export default function Document() {
       <Head>
         <meta charSet="utf-8" />
         
+        {/* Stripe.js script with integrity check */}
+        <script src="https://js.stripe.com/v3/" async></script>
+        
         {/* High-compatibility favicons (placed at the very top for maximum browser compatibility) */}
         <link rel="icon" href="/favicon.ico" />
         <link rel="shortcut icon" href="/favicon.ico" />

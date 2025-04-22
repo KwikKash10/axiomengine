@@ -16,7 +16,7 @@ if (!stripeKey) {
 }
 
 const stripe = new Stripe(stripeKey?.trim() || '', {
-  apiVersion: '2023-10-16', // Keep this version for now as it's stable
+  apiVersion: '2025-03-31.basil', // Update to match Netlify function's version
   typescript: true, // Enable TypeScript support
   maxNetworkRetries: 3, // Add retry logic for network issues
 });
@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     
     // Sanitize inputs
     const sanitizedPlanType = planType.toLowerCase().trim();
-    const sanitizedCurrency = userCurrency.toLowerCase().trim();
+    const sanitizedCurrency = userCurrency.toUpperCase().trim();
     
     // Check if we're in local development without Stripe keys
     const isLocalDev = process.env.NODE_ENV === 'development' && !stripe;
@@ -93,72 +93,78 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Server configuration error - missing API key' });
     }
 
-    // Set the line items based on plan type with dynamic currency
+    // Product names and descriptions based on plan type
+    const productDetails = {
+      lifetime: {
+        name: 'Getino Lifetime',
+        description: 'Lifetime access to Getino Premium'
+      },
+      yearly: {
+        name: 'Getino Premium - Yearly',
+        description: 'Annual subscription to Getino Premium'
+      },
+      monthly: {
+        name: 'Getino Premium - Monthly',
+        description: 'Monthly subscription to Getino Premium'
+      },
+      'monthly-yearly': {
+        name: 'Getino Premium - Annual (Monthly Billing)',
+        description: 'Annual subscription with monthly billing'
+      }
+    };
+
+    const productName = productDetails[sanitizedPlanType]?.name || 'Getino Premium';
+    
+    // Use predefined price IDs for upsell functionality
     let lineItems;
-    let mode = 'payment';
-    const productIds = {
-      lifetime: 'prod_S4nB4crsooi2fN',
-      yearly: 'prod_S4nAJKWNYnrZ8C',
-      monthly: 'prod_S4n8GRGIBAlcmW',
+    let mode = sanitizedPlanType === 'lifetime' ? 'payment' : 'subscription';
+    const priceIds = {
+      lifetime: 'price_1RE8O72KitrBpBuO12sd4L3M', // Lifetime plan ($99)
+      yearly: 'price_1RE8Lt2KitrBpBuOYYbxSAKp',   // Yearly plan ($49)
+      monthly: 'price_1RE4uK2KitrBpBuOLcp4UXHX',  // Monthly plan ($14.99)
+      'monthly-yearly': 'price_1RGf3I2KitrBpBuOak7aQHKb', // Monthly billed yearly plan ($49)
     };
     
-    if (!productIds[sanitizedPlanType]) {
+    if (!priceIds[sanitizedPlanType]) {
       return res.status(400).json({ error: 'Invalid plan type provided' });
     }
     
+    // Log currency information for reference but use USD pricing
+    console.log(`Creating ${mode} checkout with reference ${sanitizedCurrency} ${convertedAmount}`);
+
+    // Set up line items with price IDs 
     switch (sanitizedPlanType) {
       case 'lifetime':
         lineItems = [
           {
-            price_data: {
-              currency: sanitizedCurrency,
-              product_data: {
-                name: 'Buy Getino Lifetime'
-              },
-              unit_amount: convertedAmount,
-            },
+            price: priceIds.lifetime,
             quantity: 1,
           },
         ];
-        mode = 'payment'; // One-time payment
         break;
       case 'yearly':
         lineItems = [
           {
-            price_data: {
-              currency: sanitizedCurrency,
-              product_data: {
-                name: 'Subscribe to Getino Pro'
-              },
-              unit_amount: convertedAmount,
-              recurring: {
-                interval: 'year',
-                interval_count: 1,
-              },
-            },
+            price: priceIds.yearly,
             quantity: 1,
           },
         ];
-        mode = 'subscription'; // Recurring payment
         break;
       case 'monthly':
         lineItems = [
           {
-            price_data: {
-              currency: sanitizedCurrency,
-              product_data: {
-                name: 'Subscribe to Getino Pro'
-              },
-              unit_amount: convertedAmount,
-              recurring: {
-                interval: 'month',
-                interval_count: 1,
-              },
-            },
+            price: priceIds.monthly,
             quantity: 1,
           },
         ];
-        mode = 'subscription'; // Recurring payment
+        break;
+      case 'monthly-yearly':
+        lineItems = [
+          {
+            price: priceIds['monthly-yearly'],
+            quantity: 1,
+          },
+        ];
         break;
       default:
         return res.status(400).json({ error: 'Invalid plan type provided' });
@@ -167,43 +173,46 @@ export default async function handler(req, res) {
     // Session parameters
     const origin = req.headers.origin || 'https://checkout.getino.app';
     console.log('Request origin:', origin);
-    
-    // Product information
-    const productName = sanitizedPlanType === 'lifetime' ? 'Buy Getino Lifetime' : 
-                        'Subscribe to Getino Pro';
 
     // Base parameters for all checkout modes
     const baseSessionParams = {
-      payment_method_types: ['card'],
+      payment_method_types: mode === 'payment' 
+        ? ['card', 'amazon_pay', 'link', 'paypal'] 
+        : ['card', 'amazon_pay', 'link'],
       line_items: lineItems,
       mode,
       // Force collection of billing address with name and phone
       billing_address_collection: 'required',
-      // Add phone collection with billing address
+      // Disable phone number collection to only show email in contact section
       phone_number_collection: {
-        enabled: true
+        enabled: false
       },
-      // Improve tax settings
+      // Make users explicitly select a payment method - only for subscription mode
+      ...(mode === 'subscription' ? { payment_method_collection: 'always' } : {}),
+      // Configure payment method options
+      payment_method_options: {},
+      // Disable automatic tax to show subtotal instead
       automatic_tax: {
-        enabled: true,
+        enabled: false,
       },
-      // Custom text to improve checkout experience and remove "Pay Payment Service"
-      custom_text: {
-        submit: {
-          message: 'Click to complete your secure purchase. By proceeding, you agree to our Terms of Service.',
-        },
-        after_submit: {
-          message: 'You\'ll receive access details via email shortly.',
-        },
+      tax_id_collection: {
+        enabled: false,
       },
       allow_promotion_codes: true,
       locale: 'auto',
-      // Custom brand colors if set up in Stripe
-      custom_branding: {},
+      // Use hosted mode for clean single-column layout
+      ui_mode: 'hosted',
+      // Customize checkout button text
+      custom_text: {
+        submit: {
+          message: 'Pay and subscribe'
+        }
+      },
       // Enhanced metadata to track conversion and attribution
       metadata: {
         source: req.headers.referer || 'website',
         plan: sanitizedPlanType,
+        currency: sanitizedCurrency,
         utm_source: req.body.utm_source || undefined,
         utm_medium: req.body.utm_medium || undefined,
         utm_campaign: req.body.utm_campaign || undefined,
@@ -218,6 +227,7 @@ export default async function handler(req, res) {
         metadata: {
           plan: sanitizedPlanType,
           source: req.headers.referer || 'direct',
+          currency: sanitizedCurrency,
         },
         // This capture method helps ensure the form flow shows billing before payment
         capture_method: 'automatic',
@@ -271,17 +281,17 @@ export default async function handler(req, res) {
       });
     } else {
       return res.status(200).json({ 
-        sessionId: session.id,
-        url: session.url // Return the complete URL from Stripe
+        url: session.url,
+        sessionId: session.id
       });
     }
   } catch (error) {
     console.error('Error creating checkout session:', error);
     
     return res.status(500).json({ 
-      error: 'Error creating checkout session', 
+      error: 'Error creating checkout session',
       message: error.message || 'Unknown error',
-      details: error
+      details: error 
     });
   }
 } 

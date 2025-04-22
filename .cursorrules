@@ -88,6 +88,23 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
 
 # Lessons
 
+## Stripe Currency and Price ID Limitations (May 1, 2025)
+
+When using Stripe checkout with price IDs, there are important limitations regarding currency handling:
+
+1. Stripe price IDs are hard-coded to a specific currency set in the Stripe dashboard
+2. You cannot dynamically change the currency of a price ID (Stripe error: "To change or add currencies, remove this price and create a new one.")
+3. Using custom price_data objects allows dynamic currency but loses the billing interval toggle/upsell functionality
+
+The best approach for handling multiple currencies with Stripe checkout:
+- Display prices in the user's local currency on your own checkout page
+- Include clear notices about currency conversion before redirecting to Stripe
+- Pass the local currency and amount information as metadata (for reference only)
+- Use the fixed USD price IDs for actual payment processing
+- Explain that the user's card issuer will handle the currency conversion
+
+This balances the need for localized pricing information while maintaining Stripe's upsell functionality.
+
 ## Stable Release Documentation - v1.7.1 (April 22, 2025)
 
 ### Release Details
@@ -214,3 +231,54 @@ Note: There are some linter errors in the amount conversion logic section of che
   the ICO container for better quality and efficiency.
 - When adjusting favicons to touch the viewbox borders, use precise zoom percentages (104-110% range) to
   avoid cutting off parts of the icon while still filling the space appropriately.
+
+## Current Task: Fix Stripe.js Loading Error
+
+[X] Added Stripe.js script directly in _document.tsx
+- Added the Stripe.js script tag in the document head to ensure it's loaded before any React components
+- Used async attribute to not block page rendering
+
+[X] Improved error handling in Stripe initialization
+- Added .catch() handler to gracefully handle loadStripe failures
+- Created isStripeLoaded helper function to check Stripe availability
+- Added user-friendly error message when Stripe fails to load
+
+### Best Practices for Stripe Integration
+- Always include the Stripe.js script in the document head with async attribute
+- Use loadStripe with error handling (.catch()) to prevent unhandled promise rejections
+- Check for Stripe availability before attempting to use it (isStripeLoaded helper)
+- Provide clear error messages to users when payment systems fail to load
+- Specify the Stripe API version explicitly for version stability
+- Use environment variables for Stripe keys and never hardcode them
+- Consider adding Stripe as a preconnect hint for performance: `<link rel="preconnect" href="https://js.stripe.com">`
+
+## Current Task: Fix PayPal Integration Error
+
+[X] Fixed IntegrationError with PaymentElement billing_details
+- Identified the cause: setting address.city to 'never' in PaymentElement options without providing city in confirmPayment
+- Fixed the issue by adding missing required billing details in all stripe.confirmPayment calls
+- Added default values for billing_details.address.city, line1 and line2 when PaymentElement had them set to 'never'
+- Applied fix across all payment pages: checkout.tsx, payment-element.tsx, embedded.tsx, and embedded-components.tsx
+
+### Stripe PaymentElement Integration Best Practices
+- When setting any field to 'never' in PaymentElement options, always provide that field in confirmPayment call
+- Use the following structure to provide default values for fields excluded from the PaymentElement:
+  ```javascript
+  stripe.confirmPayment({
+    elements,
+    confirmParams: {
+      return_url: "...",
+      payment_method_data: {
+        billing_details: {
+          address: {
+            city: "Default value",
+            line1: "Default value",
+            line2: "Default value"
+          }
+        }
+      }
+    }
+  });
+  ```
+- This is especially important for PayPal integration which requires all address fields
+- For payment methods that need complete billing details, consider using 'auto' instead of 'never' in fields configuration
