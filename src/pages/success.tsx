@@ -79,3 +79,10 @@ export default function SuccessPage() {
     </ClientOnly>
   );
 } 
+
+// This ensures the page is always server-rendered and not statically generated
+export const getServerSideProps = async () => {
+  return {
+    props: {}
+  };
+};
