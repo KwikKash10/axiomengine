@@ -1,11 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/router';
-
-// Only import js-cookie on the client side
-let Cookies: any;
-if (typeof window !== 'undefined') {
-  Cookies = require('js-cookie');
-}
+import Cookies from 'js-cookie';
 
 // Define the shape of user data
 interface UserData {
@@ -23,7 +18,7 @@ export interface AuthContextType {
   checkMainAppAuth: () => Promise<boolean>;
 }
 
-// Default context value for SSR
+// Create the context with a default value for SSR
 const defaultContextValue: AuthContextType = {
   currentUser: null,
   userData: null,
@@ -31,12 +26,19 @@ const defaultContextValue: AuthContextType = {
   checkMainAppAuth: async () => false
 };
 
-// Create the context with a default value to make it SSR safe
+// Create the context
 const AuthContext = createContext<AuthContextType>(defaultContextValue);
+
+// Check if we're on the server
+const isServer = typeof window === 'undefined';
 
 // Create a hook to use the auth context
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (context === undefined && !isServer) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
 // Provider component
@@ -49,21 +51,6 @@ const AUTH_COOKIE_NAME = 'getino_auth';
 const USER_DATA_COOKIE_NAME = 'getino_user_data';
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Only run this component on the client
-  const [isClient, setIsClient] = useState(false);
-  
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  
-  // Return a default value during SSR
-  if (!isClient) {
-    return <AuthContext.Provider value={defaultContextValue}>
-      {children}
-    </AuthContext.Provider>;
-  }
-  
-  // Client-side only code below
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -84,7 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Function to check if the user is logged in using shared cookies
   const checkMainAppAuth = async (): Promise<boolean> => {
-    if (!isClient) return false;
+    if (isServer) return false;
     
     try {
       // For development purposes, we'll simulate an authenticated user
@@ -145,7 +132,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Helper to set auth cookies
   const setAuthCookies = (user: any, uData: UserData) => {
-    if (!isClient) return;
+    if (isServer) return;
     
     // Set cookie with domain=.getino.app in production to share between subdomains
     Cookies.set(AUTH_COOKIE_NAME, JSON.stringify(user), { 
@@ -161,7 +148,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Get auth data from URL parameters or check with main app
   useEffect(() => {
-    if (!isClient || !router.isReady) return;
+    if (isServer) return;
+    if (!router.isReady) return;
     
     const checkAuth = async () => {
       setLoading(true);
@@ -203,8 +191,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUserData(null);
           
           // Clear cookies
-          Cookies.remove(AUTH_COOKIE_NAME);
-          Cookies.remove(USER_DATA_COOKIE_NAME);
+          if (!isServer) {
+            Cookies.remove(AUTH_COOKIE_NAME);
+            Cookies.remove(USER_DATA_COOKIE_NAME);
+          }
         }
       }
       
@@ -213,7 +203,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
     
     checkAuth();
-  }, [router.isReady, router.query, isClient]);
+  }, [router.isReady, router.query]);
 
   const value = {
     currentUser,

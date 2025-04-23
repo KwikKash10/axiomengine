@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import Link from 'next/link';
@@ -7,7 +5,7 @@ import Link from 'next/link';
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-export default function FormPage() {
+export default function StripeCheckoutForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<any>(null);
@@ -253,13 +251,9 @@ export default function FormPage() {
                   Processing...
                 </div>
               ) : (
-                <span>Proceed to Payment</span>
+                'Checkout with Stripe'
               )}
             </button>
-
-            <p className="mt-4 text-sm text-gray-500 text-center">
-              By proceeding, you agree to our <a href="#" className="text-blue-600 hover:underline">Terms of Service</a> and acknowledge that your payment will be processed by Stripe.
-            </p>
           </div>
         </div>
       </div>
