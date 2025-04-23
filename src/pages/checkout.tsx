@@ -23,6 +23,7 @@ import {
   FiChevronUp, FiChevronDown, FiExternalLink, FiGlobe
 } from 'react-icons/fi';
 import { BsCash } from 'react-icons/bs';
+import ClientOnly from '../components/ClientOnly';
 
 // Currency types and data
 type CurrencyCode = 
@@ -702,7 +703,7 @@ const CheckoutGoogleTranslate: React.FC = () => {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParamsHook = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<any>(null);
@@ -729,9 +730,20 @@ export default function CheckoutPage() {
   // Add a state to track payment form loading
   const [paymentFormLoading, setPaymentFormLoading] = useState(false);
   const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
-
-  const plan = searchParams.get('plan') as 'monthly' | 'yearly' | 'lifetime' | null;
-  const couponCode = searchParams.get('coupon') || '';
+  
+  // Client-side only search params
+  const [planType, setPlanType] = useState<string | null>(null);
+  const [coupon, setCoupon] = useState('');
+  
+  // Get search params on client-side only
+  useEffect(() => {
+    if (searchParamsHook) {
+      const plan = searchParamsHook.get('plan') as 'monthly' | 'yearly' | 'lifetime' | null;
+      const couponCode = searchParamsHook.get('coupon') || '';
+      setPlanType(plan);
+      setCoupon(couponCode);
+    }
+  }, [searchParamsHook]);
 
   // Detect user's currency based on IP address with browser locale as fallback
   useEffect(() => {
@@ -981,8 +993,8 @@ export default function CheckoutPage() {
 
   // Check for valid plan
   useEffect(() => {
-    if (plan) {
-      setSelectedPlan(plan);
+    if (planType) {
+      setSelectedPlan(planType);
       setIsValidPlan(true);
       
       // Reset client secret and initiate new checkout whenever plan changes
@@ -994,7 +1006,7 @@ export default function CheckoutPage() {
       setIsValidPlan(false);
       // Don't update URL if there's no plan
     }
-  }, [plan]); // Remove router from dependency array to prevent unnecessary rerenders
+  }, [planType]); // Remove router from dependency array to prevent unnecessary rerenders
 
   // Format time remaining
   const formatTime = (seconds: number) => {
@@ -1037,9 +1049,9 @@ export default function CheckoutPage() {
       }
       
       // Get UTM parameters from URL if available
-      const utmSource = searchParams.get('utm_source') || '';
-      const utmMedium = searchParams.get('utm_medium') || '';
-      const utmCampaign = searchParams.get('utm_campaign') || '';
+      const utmSource = searchParamsHook.get('utm_source') || '';
+      const utmMedium = searchParamsHook.get('utm_medium') || '';
+      const utmCampaign = searchParamsHook.get('utm_campaign') || '';
       
       // Generate a unique client ID for conversion tracking
       const clientId = `client_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -1266,7 +1278,7 @@ export default function CheckoutPage() {
 
   // Get plan details with dynamic currency conversion
   const getPlanDetails = () => {
-    switch (plan) {
+    switch (planType) {
       case 'monthly':
         return {
           name: 'Monthly Plan',
@@ -1463,7 +1475,7 @@ export default function CheckoutPage() {
     // Reset the clientSecret when changing plans to force re-initialization of Stripe Elements
     setClientSecret(null);
     
-    if (plan === selectedPlan) {
+    if (planType === selectedPlan) {
       // If already selected, clear selection
       router.push('/', { scroll: false });
     } else {
@@ -1537,780 +1549,783 @@ export default function CheckoutPage() {
     return `Save over ${savingsPercent}% compared to monthly`;
   };
 
+  // Return the UI
   return (
-    <CheckoutPageWrapper>
-      <div className="min-h-screen bg-[#f3f4f7] font-inter">
-        <div className="max-w-7xl mx-auto py-8 px-6 sm:px-8 lg:px-12">
-          <div className="w-full">
-            {/* Back button */}
-            <div className="mb-4">
-              <Link href="https://getino.app/pricing" className="flex items-center text-gray-600 hover:text-gray-900">
-                <FiArrowLeft className="mr-2" />
-                Back to Pricing
-              </Link>
-            </div>
+    <ClientOnly>
+      <CheckoutPageWrapper>
+        <div className="min-h-screen bg-[#f3f4f7] font-inter">
+          <div className="max-w-7xl mx-auto py-8 px-6 sm:px-8 lg:px-12">
+            <div className="w-full">
+              {/* Back button */}
+              <div className="mb-4">
+                <Link href="https://getino.app/pricing" className="flex items-center text-gray-600 hover:text-gray-900">
+                  <FiArrowLeft className="mr-2" />
+                  Back to Pricing
+                </Link>
+              </div>
 
-            {/* Limited time offer banner */}
-            <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-3 rounded-lg mb-4 shadow-md">
-              <div className="flex flex-col sm:flex-row items-center justify-between">
-                <div className="flex items-center mb-2 sm:mb-0">
-                  <FiClock className="mr-2 h-5 w-5" />
-                  <span className="font-medium">Limited Time Offer!</span>
-                </div>
-                <div className="text-center sm:text-right">
-                  <p className="text-sm">Expires in <span className="font-bold">{formatTime(timeLeft)}</span></p>
+              {/* Limited time offer banner */}
+              <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-3 rounded-lg mb-4 shadow-md">
+                <div className="flex flex-col sm:flex-row items-center justify-between">
+                  <div className="flex items-center mb-2 sm:mb-0">
+                    <FiClock className="mr-2 h-5 w-5" />
+                    <span className="font-medium">Limited Time Offer!</span>
+                  </div>
+                  <div className="text-center sm:text-right">
+                    <p className="text-sm">Expires in <span className="font-bold">{formatTime(timeLeft)}</span></p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Main content */}
-            <div className="flex flex-col md:flex-row gap-6">
-              {/* Left column - Payment form */}
-              <div className="w-full md:flex-[0.63]">
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3 text-center">Complete Your Purchase</h2>
-                  
-                  {/* Plan Selection */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-6 text-center">You're just one step away from unlocking premium features</h3>
+              {/* Main content */}
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Left column - Payment form */}
+                <div className="w-full md:flex-[0.63]">
+                  <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 mb-3 text-center">Complete Your Purchase</h2>
                     
-                    {/* Custom Currency Selector - Moved between heading and plan boxes */}
-                    <div className="flex justify-center items-center mb-6">
-                      <div className="inline-flex items-center bg-gray-100 rounded-lg px-3 py-2 shadow-sm relative" ref={dropdownRef}>
-                        <FiGlobe className="text-gray-500 mr-2" />
-                        
-                        {/* Dropdown Button */}
-                        <div 
-                          className="flex items-center justify-between cursor-pointer min-w-[180px]"
-                          onClick={() => setDropdownOpen(!dropdownOpen)}
-                        >
-                          <span className="text-gray-700 font-medium">{CURRENCY_NAMES[userCurrency]}</span>
-                          <FiChevronDown className={`ml-2 transition-transform ${dropdownOpen ? 'transform rotate-180' : ''}`} />
-                        </div>
-                        
-                        {/* Dropdown Menu */}
-                        {dropdownOpen && (
+                    {/* Plan Selection */}
+                    <div className="mb-6">
+                      <h3 className="text-lg font-medium text-gray-900 mb-6 text-center">You're just one step away from unlocking premium features</h3>
+                      
+                      {/* Custom Currency Selector - Moved between heading and plan boxes */}
+                      <div className="flex justify-center items-center mb-6">
+                        <div className="inline-flex items-center bg-gray-100 rounded-lg px-3 py-2 shadow-sm relative" ref={dropdownRef}>
+                          <FiGlobe className="text-gray-500 mr-2" />
+                          
+                          {/* Dropdown Button */}
                           <div 
-                            className="absolute top-full left-0 mt-1 bg-black/85 backdrop-blur-sm rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto scrollbar-hide" 
-                            style={{ 
-                              width: '100%',
-                              scrollbarWidth: 'none', /* Firefox */
-                              msOverflowStyle: 'none', /* IE and Edge */
-                            }}
-                            ref={dropdownContentRef}
+                            className="flex items-center justify-between cursor-pointer min-w-[180px]"
+                            onClick={() => setDropdownOpen(!dropdownOpen)}
                           >
-                            <style jsx>{`
-                              div::-webkit-scrollbar {
-                                display: none; /* Chrome, Safari, Opera */
-                              }
-                            `}</style>
-                            {CURRENCY_GROUPS.map((group) => (
-                              <div key={group.label}>
-                                <div 
-                                  className="px-3 py-2 text-gray-500/60"
-                                  style={{ textAlign: 'left', fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif', paddingLeft: '20px' }}
-                                  onClick={() => {
-                                    if (showAllCurrencies) {
-                                      setLastClickedGroup(group.label);
-                                      setShowAllCurrencies(false);
-                                    } else {
-                                      setShowAllCurrencies(true);
-                                      setLastClickedGroup(group.label);
-                                      
-                                      // Use setTimeout to ensure the DOM is updated before scrolling
-                                      setTimeout(() => {
-                                        const element = groupRefs.current[group.label];
-                                        const container = dropdownContentRef.current;
-                                        if (element && container) {
-                                          // Scroll within the dropdown only, not the whole page
-                                          const headerTop = element.offsetTop;
-                                          container.scrollTop = headerTop;
-                                        }
-                                      }, 10);
+                            <span className="text-gray-700 font-medium">{CURRENCY_NAMES[userCurrency]}</span>
+                            <FiChevronDown className={`ml-2 transition-transform ${dropdownOpen ? 'transform rotate-180' : ''}`} />
+                          </div>
+                          
+                          {/* Dropdown Menu */}
+                          {dropdownOpen && (
+                            <div 
+                              className="absolute top-full left-0 mt-1 bg-black/85 backdrop-blur-sm rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto scrollbar-hide" 
+                              style={{ 
+                                width: '100%',
+                                scrollbarWidth: 'none', /* Firefox */
+                                msOverflowStyle: 'none', /* IE and Edge */
+                              }}
+                              ref={dropdownContentRef}
+                            >
+                              <style jsx>{`
+                                div::-webkit-scrollbar {
+                                  display: none; /* Chrome, Safari, Opera */
+                                }
+                              `}</style>
+                              {CURRENCY_GROUPS.map((group) => (
+                                <div key={group.label}>
+                                  <div 
+                                    className="px-3 py-2 text-gray-500/60"
+                                    style={{ textAlign: 'left', fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif', paddingLeft: '20px' }}
+                                    onClick={() => {
+                                      if (showAllCurrencies) {
+                                        setLastClickedGroup(group.label);
+                                        setShowAllCurrencies(false);
+                                      } else {
+                                        setShowAllCurrencies(true);
+                                        setLastClickedGroup(group.label);
+                                        
+                                        // Use setTimeout to ensure the DOM is updated before scrolling
+                                        setTimeout(() => {
+                                          const element = groupRefs.current[group.label];
+                                          const container = dropdownContentRef.current;
+                                          if (element && container) {
+                                            // Scroll within the dropdown only, not the whole page
+                                            const headerTop = element.offsetTop;
+                                            container.scrollTop = headerTop;
+                                          }
+                                        }, 10);
+                                      }
+                                    }}
+                                    ref={el => groupRefs.current[group.label] = el}
+                                  >
+                                    {group.label}
+                                  </div>
+                                  {showAllCurrencies && (
+                                    <div>
+                                      {group.currencies.map((code) => (
+                                        <div 
+                                          key={code}
+                                          className={`px-5 py-2 hover:bg-gray-700/70 cursor-pointer flex items-center justify-between ${userCurrency === code ? 'bg-gray-700/50' : ''}`}
+                                          onClick={() => handleCurrencySelect(code)}
+                                        >
+                                          <span className="text-white font-semibold pl-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>{CURRENCY_NAMES[code]}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div 
+                          onClick={() => handlePlanSelection('monthly')}
+                          className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                            planType === 'monthly' 
+                              ? 'border-blue-500 bg-blue-50' 
+                              : 'border-gray-200 hover:border-blue-300'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-medium text-gray-900">Monthly Plan</h4>
+                              <p className="text-sm text-gray-500">Billed monthly</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-gray-900">{formatPrice(14.99, '', 'monthly')}</p>
+                              <p className="text-sm text-gray-500">/month</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div 
+                          onClick={() => handlePlanSelection('yearly')}
+                          className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                            planType === 'yearly' 
+                              ? 'border-green-500 bg-green-50' 
+                              : 'border-gray-200 hover:border-green-300'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-medium text-gray-900">Yearly Plan</h4>
+                              <p className="text-sm text-gray-500">Billed annually (save over {(() => {
+                                // Use the raw USD values and rates directly for accurate calculation
+                                const monthlyUsdPrice = 14.99;
+                                const yearlyUsdPrice = 49.00;
+                                
+                                // Get exchange rate
+                                const rates = exchangeRates || EXCHANGE_RATES;
+                                const rate = rates[userCurrency];
+                                
+                                // Calculate annual cost and savings
+                                const monthlyPriceInCurrency = 
+                                  CURRENCY_FORMATS[userCurrency].decimals
+                                    ? Math.floor(monthlyUsdPrice * rate) + 0.99
+                                    : Math.ceil((monthlyUsdPrice * rate) / 100) * 100 - 1;
+                                
+                                const yearlyPriceInCurrency = 
+                                  CURRENCY_FORMATS[userCurrency].decimals
+                                    ? Math.round(yearlyUsdPrice * rate)
+                                    : Math.round(yearlyUsdPrice * rate / 100) * 100;
+                                
+                                const annualCost = monthlyPriceInCurrency * 12;
+                                const savings = annualCost - yearlyPriceInCurrency;
+                                
+                                // Calculate percentage
+                                return Math.round((savings / annualCost) * 100);
+                              })()}%)</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-gray-900">{formatPrice(49.00, '', 'yearly')}</p>
+                              <p className="text-sm text-gray-500">/year</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div 
+                          onClick={() => handlePlanSelection('lifetime')}
+                          className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                            planType === 'lifetime' 
+                              ? 'border-amber-500 bg-amber-50' 
+                              : 'border-gray-200 hover:border-amber-300'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-medium text-gray-900">Lifetime</h4>
+                              <p className="text-sm text-gray-500">One-time payment</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-gray-900">{formatPrice(99.00, '', 'lifetime')}</p>
+                              <p className="text-sm text-gray-500">Once</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {planType && selectedPlan && (
+                      <>
+                        {/* Order summary */}
+                        <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Summary</h3>
+                          <dl className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <dt className="text-sm font-medium text-gray-600">Plan</dt>
+                              <dd className="text-sm font-medium text-gray-900 flex items-center">
+                                {planDetails.name}
+                                {planDetails.popular && (
+                                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs font-normal ml-2">
+                                    Popular
+                                  </span>
+                                )}
+                                {planDetails.recommended && (
+                                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs font-normal ml-2">
+                                    Recommended
+                                  </span>
+                                )}
+                                {planDetails.special && (
+                                  <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-md text-xs font-normal ml-2">
+                                    Best Value
+                                  </span>
+                                )}
+                              </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <dt className="text-sm font-medium text-gray-600">Billing</dt>
+                              <dd className="text-sm font-medium text-gray-900">
+                                {planType === 'lifetime' ? 'One-time payment' : planType === 'yearly' ? 'Annual' : 'Per month'}
+                              </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <dt className="text-sm font-medium text-gray-600">Price</dt>
+                              <dd className="text-sm font-medium text-gray-900">{planDetails.price}</dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <dt className="text-sm font-medium text-gray-600">VAT</dt>
+                              <dd className="text-sm font-medium text-gray-900">incl.</dd>
+                            </div>
+                            {coupon && (
+                              <div className="flex items-center justify-between">
+                                <dt className="text-sm font-medium text-gray-600">Coupon</dt>
+                                <dd className="text-sm font-medium text-green-600">{coupon}</dd>
+                              </div>
+                            )}
+                            <div className="border-t border-gray-200 pt-4">
+                              <div className="flex items-center justify-between">
+                                <dt className="text-base font-medium text-gray-900">Total</dt>
+                                <dd className="text-base font-medium text-gray-900">{planDetails.price}</dd>
+                              </div>
+                              <div className="flex items-center justify-between text-sm mt-2">
+                                <dt className="font-light text-green-600">You save</dt>
+                                <dd className="font-light text-green-600">
+                                  {planType === 'monthly' && 'No long-term commitment'}
+                                  {planType === 'yearly' && planDetails.savings}
+                                  {planType === 'lifetime' && 'Pay once, use forever'}
+                                </dd>
+                              </div>
+                            </div>
+                          </dl>
+                        </div>
+
+                        {clientSecret && (
+                          <div className="mt-6">
+                            {paymentFormLoading ? (
+                              <div className="flex justify-center items-center py-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                <span className="ml-3 text-gray-700">Loading payment options...</span>
+                              </div>
+                            ) : (
+                              <>
+                                <Elements 
+                                  options={{ 
+                                    clientSecret,
+                                    appearance: { 
+                                      theme: 'stripe',
+                                      variables: {
+                                        colorPrimary: '#4F46E5',
+                                        colorBackground: '#ffffff',
+                                        colorText: '#1F2937',
+                                        fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+                                        borderRadius: '8px',
+                                      },
                                     }
                                   }}
-                                  ref={el => groupRefs.current[group.label] = el}
+                                  stripe={stripePromise}
+                                  key={`stripe-elements-${userCurrency}-${clientSecret}`}
                                 >
-                                  {group.label}
-                                </div>
-                                {showAllCurrencies && (
-                                  <div>
-                                    {group.currencies.map((code) => (
-                                      <div 
-                                        key={code}
-                                        className={`px-5 py-2 hover:bg-gray-700/70 cursor-pointer flex items-center justify-between ${userCurrency === code ? 'bg-gray-700/50' : ''}`}
-                                        onClick={() => handleCurrencySelect(code)}
-                                      >
-                                        <span className="text-white font-semibold pl-3" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>{CURRENCY_NAMES[code]}</span>
+                                  <CheckoutForm planType={selectedPlan || 'lifetime'} onSwitchToRedirect={() => handleCheckout(true)} formattedPrice={planDetails.price} />
+                                </Elements>
+                                
+                                {/* More options dropdown */}
+                                <div className="flex flex-col space-y-4 mt-4 items-center">
+                                  <div className="max-w-md w-full">
+                                    <button
+                                      type="button"
+                                      onClick={() => setMoreOptionsOpen(!moreOptionsOpen)}
+                                      className="text-[#4f46e6] hover:text-[#4338ca] text-sm font-medium flex items-center"
+                                    >
+                                      More options
+                                      <FiChevronDown className={`ml-1 transition-transform ${moreOptionsOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    
+                                    {moreOptionsOpen && (
+                                      <div className="mt-4 transition-all duration-200 ease-in-out">
+                                        {/* Payment options help message */}
+                                        <div className="p-3 -mx-10 bg-indigo-50 border border-indigo-100 rounded-md mb-2">
+                                          <p className="text-xs text-[#4f46e6] flex items-start">
+                                            <FiInfo className="flex-shrink-0 h-4 w-4 mr-2 mt-0.5" />
+                                            <span>
+                                              <strong className="block mb-1">Can't see multiple payment options?</strong>
+                                              Some payment methods may not be available in your region or with your selected currency. Try refreshing the checkout session, changing currency, switching to desktop view, or using a different browser. Credit card payments and 'Pay with Link' are always available.
+                                            </span>
+                                          </p>
+                                        </div>
+                                        
+                                        {/* Need a different way to checkout? button */}
+                                        <div className="flex justify-center w-full relative">
+                                          <div className="flex items-center">
+                                            <button
+                                              type="button"
+                                              onClick={() => handleCheckout(true)}
+                                              className="text-[#4f46e6] hover:text-[#4338ca] text-sm font-medium py-2"
+                                            >
+                                              Need a different way to checkout?
+                                            </button>
+                                            
+                                            {userCurrency !== 'USD' && (
+                                              <div className="relative">
+                                                <div className="group cursor-help">
+                                                  <FiInfo className="h-3 w-3 text-[#4f46e6] hover:text-[#4338ca] ml-1 relative -top-1" />
+                                                  <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
+                                                    <div className="p-2.5 rounded-md shadow-md" style={{ backgroundColor: 'rgba(238, 242, 255, 0.7)', borderColor: 'rgba(224, 231, 255, 0.7)' }}>
+                                                      <p className="text-xs text-[#4f46e6]">
+                                                        Prices are shown in {userCurrency} for your convenience. The payment will be shown in USD and auto-converted to the selected currency by the payment processor.
+                                                      </p>
+                                                    </div>
+                                                    <div className="w-3 h-3 border-r border-b absolute -bottom-1.5 left-1/2 -translate-x-1/2 transform rotate-45" style={{ backgroundColor: 'rgba(238, 242, 255, 0.7)', borderColor: 'rgba(224, 231, 255, 0.7)' }}></div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Currency Conversion Notice - Removed static box */}
                                       </div>
-                                    ))}
+                                    )}
                                   </div>
-                                )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Secure Payment Methods section - directly below the Complete Your Order box */}
+                  <div className="rounded-lg bg-transparent p-3 mt-3">
+                    <h3 className="text-lg font-semibold text-[#374151] mb-4 text-center">
+                      Secure Payment Methods
+                    </h3>
+                    <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-4 relative h-14"> {/* Increased height to accommodate animation */}
+                      {/* Center card (Discover) */}
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 z-10 transition-transform duration-300 ease-out hover:scale-110 hover:z-50" style={{ '--center-offset-x': '24px' } as React.CSSProperties}>
+                        <img src="/secure payment methods/discover.svg" alt="Discover" className="h-6 sm:h-8 rounded-md animate-slide-in-center" style={{ animationDelay: '0s' }} />
+                      </div>
+                      
+                      {/* Left side cards */}
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '220px' } as React.CSSProperties}>
+                        <img src="/secure payment methods/visa.svg" alt="Visa" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.1s' }} />
+                      </div>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '165px' } as React.CSSProperties}>
+                        <img src="/secure payment methods/mastercard.svg" alt="Mastercard" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.3s' }} />
+                      </div>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '110px' } as React.CSSProperties}>
+                        <img src="/secure payment methods/maestro.svg" alt="Maestro" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.5s' }} />
+                      </div>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '55px' } as React.CSSProperties}>
+                        <img src="/secure payment methods/amex.svg" alt="American Express" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.7s' }} />
+                      </div>
+                      
+                      {/* Right side cards */}
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '55px' } as React.CSSProperties}>
+                        <img src="/secure payment methods/diners.svg" alt="Diners Club" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.7s' }} />
+                      </div>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '110px' } as React.CSSProperties}>
+                        <img src="/secure payment methods/cartes-bancaires.svg" alt="Cartes Bancaires" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.5s' }} />
+                      </div>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '165px' } as React.CSSProperties}>
+                        <img src="/secure payment methods/apple-pay.svg" alt="Apple Pay" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.3s' }} />
+                      </div>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '220px' } as React.CSSProperties}>
+                        <img src="/secure payment methods/google-pay.svg" alt="Google Pay" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.1s' }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Need help choosing section */}
+                  <div className="text-center mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h3 className="text-base font-medium text-[#1e293b] mb-2">Need help choosing the right plan?</h3>
+                    <a
+                      href="https://getino.app/support"
+                      className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200 text-base font-medium inline-flex items-center"
+                    >
+                      Contact support
+                    </a>
+                  </div>
+                </div>
+
+                {/* Right column - Plan details */}
+                <div className="w-full md:flex-[0.37] md:flex md:justify-end">
+                  <div className="space-y-6 w-[95%]">
+                    {/* Plan details card */}
+                    <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100 relative">
+                      <div className="p-6">
+                        {planType && selectedPlan ? (
+                          <>
+                            {/* Plan name */}
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">{planDetails.name}</h3>
+                            
+                            {/* Plan tags as diagonal banners */}
+                            {planDetails.popular && (
+                              <div className="absolute top-4 right-[-35px] w-[140px] transform rotate-45 bg-blue-100 text-blue-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-blue-200">
+                                <span className="pl-1">Popular</span>
                               </div>
-                            ))}
+                            )}
+                            {planDetails.recommended && (
+                              <div className="absolute top-8 right-[-40px] w-[160px] transform rotate-45 bg-green-100 text-green-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-green-200">
+                                <span className="pr-[0.625rem] flex items-center justify-center">Recommended</span>
+                              </div>
+                            )}
+                            {planDetails.special && (
+                              <div className="absolute top-5 right-[-36px] w-[140px] transform rotate-45 bg-amber-100 text-amber-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-amber-200">
+                                <span>Best Value</span>
+                              </div>
+                            )}
+                            
+                            {/* Price */}
+                            <div className="mb-4">
+                              <span className="text-2xl font-bold text-gray-900">{planDetails.price}</span>
+                              {planType !== 'lifetime' && <span className="text-gray-500 text-sm">/{planType === 'yearly' ? 'year' : 'month'}</span>}
+                            </div>
+                            
+                            {/* Features */}
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium text-gray-900 mb-2">Features included:</h4>
+                              <ul className="space-y-2">
+                                {planType === 'monthly' && (
+                                  <>
+                                    <li className="flex items-start">
+                                      <FiUnlock className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Full access to all opportunities</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiFilter className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Advanced search with filters</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiBarChart2 className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Detailed Earnings Reports</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiFileText className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Detailed instructions & direct links</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiAward className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Priority support</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiTrendingUp className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Earnings tracking & analytics</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiBell className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Push notifications</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiInbox className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Weekly opportunity digest</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiPhone className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Provider contact information</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiAlertCircle className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Custom opportunity alerts</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiUsers className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Premium community features</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiRefreshCw className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Free updates during subscription</span>
+                                    </li>
+                                  </>
+                                )}
+                                {planType === 'yearly' && (
+                                  <>
+                                    <li className="flex items-start">
+                                      <FiPackage className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">All monthly features</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <BsCash className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">
+                                        {calculateDynamicSavingsText()}
+                                      </span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiClock className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Early access to new features</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiHeadphones className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">VIP support</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiGift className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Exclusive opportunities</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiRefreshCw className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Free updates during subscription</span>
+                                    </li>
+                                  </>
+                                )}
+                                {planType === 'lifetime' && (
+                                  <>
+                                    <li className="flex items-start">
+                                      <FiPackage className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">All yearly features</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <BsCash className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Never pay again</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiRefreshCw className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Lifetime updates forever</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiHeadphones className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Premium support</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiZap className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Early access to all new features</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiUsers className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">Exclusive community access</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                      <FiCreditCard className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
+                                      <span className="text-xs text-gray-600">No recurring payments</span>
+                                  </li>
+                                  </>
+                                )}
+                              </ul>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-center py-8">
+                            <div className="mx-auto h-12 w-12 text-[#d4a373] mb-4">
+                              <FiPackage className="h-12 w-12" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a Plan</h3>
+                            <p className="text-gray-500">Select a plan to see detailed features and pricing</p>
                           </div>
                         )}
                       </div>
                     </div>
-                    
-                    <div className="space-y-4">
-                      <div 
-                        onClick={() => handlePlanSelection('monthly')}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                          plan === 'monthly' 
-                            ? 'border-blue-500 bg-blue-50' 
-                            : 'border-gray-200 hover:border-blue-300'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium text-gray-900">Monthly Plan</h4>
-                            <p className="text-sm text-gray-500">Billed monthly</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-gray-900">{formatPrice(14.99, '', 'monthly')}</p>
-                            <p className="text-sm text-gray-500">/month</p>
+
+                    {/* Limited availability card */}
+                    <div className="rounded-lg bg-blue-50 overflow-hidden border border-blue-100">
+                      <div className="flex items-center p-4">
+                        <div className="flex-shrink-0 mr-4">
+                          <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <FiClock className="h-6 w-6 text-blue-600" />
                           </div>
                         </div>
-                      </div>
-
-                      <div 
-                        onClick={() => handlePlanSelection('yearly')}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                          plan === 'yearly' 
-                            ? 'border-green-500 bg-green-50' 
-                            : 'border-gray-200 hover:border-green-300'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium text-gray-900">Yearly Plan</h4>
-                            <p className="text-sm text-gray-500">Billed annually (save over {(() => {
-                              // Use the raw USD values and rates directly for accurate calculation
-                              const monthlyUsdPrice = 14.99;
-                              const yearlyUsdPrice = 49.00;
-                              
-                              // Get exchange rate
-                              const rates = exchangeRates || EXCHANGE_RATES;
-                              const rate = rates[userCurrency];
-                              
-                              // Calculate annual cost and savings
-                              const monthlyPriceInCurrency = 
-                                CURRENCY_FORMATS[userCurrency].decimals
-                                  ? Math.floor(monthlyUsdPrice * rate) + 0.99
-                                  : Math.ceil((monthlyUsdPrice * rate) / 100) * 100 - 1;
-                              
-                              const yearlyPriceInCurrency = 
-                                CURRENCY_FORMATS[userCurrency].decimals
-                                  ? Math.round(yearlyUsdPrice * rate)
-                                  : Math.round(yearlyUsdPrice * rate / 100) * 100;
-                              
-                              const annualCost = monthlyPriceInCurrency * 12;
-                              const savings = annualCost - yearlyPriceInCurrency;
-                              
-                              // Calculate percentage
-                              return Math.round((savings / annualCost) * 100);
-                            })()}%)</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-gray-900">{formatPrice(49.00, '', 'yearly')}</p>
-                            <p className="text-sm text-gray-500">/year</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div 
-                        onClick={() => handlePlanSelection('lifetime')}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                          plan === 'lifetime' 
-                            ? 'border-amber-500 bg-amber-50' 
-                            : 'border-gray-200 hover:border-amber-300'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium text-gray-900">Lifetime</h4>
-                            <p className="text-sm text-gray-500">One-time payment</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-gray-900">{formatPrice(99.00, '', 'lifetime')}</p>
-                            <p className="text-sm text-gray-500">Once</p>
-                          </div>
+                        <div>
+                          <h4 className="font-medium text-blue-800 text-base">Limited availability!</h4>
+                          <p className="text-blue-700 text-sm">Only <span className="font-bold">10</span> spots left.</p>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  {plan && selectedPlan && (
-                    <>
-                      {/* Order summary */}
-                      <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Summary</h3>
-                        <dl className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <dt className="text-sm font-medium text-gray-600">Plan</dt>
-                            <dd className="text-sm font-medium text-gray-900 flex items-center">
-                              {planDetails.name}
-                              {planDetails.popular && (
-                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs font-normal ml-2">
-                                  Popular
-                                </span>
-                              )}
-                              {planDetails.recommended && (
-                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs font-normal ml-2">
-                                  Recommended
-                                </span>
-                              )}
-                              {planDetails.special && (
-                                <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-md text-xs font-normal ml-2">
-                                  Best Value
-                                </span>
-                              )}
-                            </dd>
+
+                    {/* Money-back guarantee card */}
+                    <div className="rounded-lg bg-green-50 overflow-hidden border border-green-100">
+                      <div className="flex items-center p-4">
+                        <div className="flex-shrink-0 mr-4">
+                          <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                            <FiShield className="h-6 w-6 text-green-600" />
                           </div>
-                          <div className="flex items-center justify-between">
-                            <dt className="text-sm font-medium text-gray-600">Billing</dt>
-                            <dd className="text-sm font-medium text-gray-900">
-                              {plan === 'lifetime' ? 'One-time payment' : plan === 'yearly' ? 'Annual' : 'Per month'}
-                            </dd>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <dt className="text-sm font-medium text-gray-600">Price</dt>
-                            <dd className="text-sm font-medium text-gray-900">{planDetails.price}</dd>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <dt className="text-sm font-medium text-gray-600">VAT</dt>
-                            <dd className="text-sm font-medium text-gray-900">incl.</dd>
-                          </div>
-                          {couponCode && (
-                            <div className="flex items-center justify-between">
-                              <dt className="text-sm font-medium text-gray-600">Coupon</dt>
-                              <dd className="text-sm font-medium text-green-600">{couponCode}</dd>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-green-800 text-xs md:text-sm">30-Day Money-Back Guarantee</h4>
+                          <p className="text-gray-600 text-xs mt-2">Not satisfied? Get a full refund, no questions asked.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Why choose Getino Premium? */}
+                    <div className="rounded-lg shadow-md border border-gray-200 overflow-hidden bg-white mt-4">
+                      <div className="p-6">
+                        <h4 className="text-base font-semibold text-gray-900 mb-4">Why choose Getino Premium?</h4>
+                        <div className="space-y-4">
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
+                              <FiStar className="h-4 w-4 text-blue-600" />
                             </div>
-                          )}
-                          <div className="border-t border-gray-200 pt-4">
-                            <div className="flex items-center justify-between">
-                              <dt className="text-base font-medium text-gray-900">Total</dt>
-                              <dd className="text-base font-medium text-gray-900">{planDetails.price}</dd>
-                            </div>
-                            <div className="flex items-center justify-between text-sm mt-2">
-                              <dt className="font-light text-green-600">You save</dt>
-                              <dd className="font-light text-green-600">
-                                {plan === 'monthly' && 'No long-term commitment'}
-                                {plan === 'yearly' && planDetails.savings}
-                                {plan === 'lifetime' && 'Pay once, use forever'}
-                              </dd>
+                            <div className="ml-3">
+                              <h5 className="text-sm font-medium text-gray-900">Higher quality opportunities</h5>
+                              <p className="text-sm text-gray-500">Access vetted, high-paying opportunities not available to free users</p>
                             </div>
                           </div>
-                        </dl>
-                      </div>
-
-                      {clientSecret && (
-                        <div className="mt-6">
-                          {paymentFormLoading ? (
-                            <div className="flex justify-center items-center py-8">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                              <span className="ml-3 text-gray-700">Loading payment options...</span>
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
+                              <FiUsers className="h-4 w-4 text-blue-600" />
                             </div>
-                          ) : (
-                            <>
-                              <Elements 
-                                options={{ 
-                                  clientSecret,
-                                  appearance: { 
-                                    theme: 'stripe',
-                                    variables: {
-                                      colorPrimary: '#4F46E5',
-                                      colorBackground: '#ffffff',
-                                      colorText: '#1F2937',
-                                      fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-                                      borderRadius: '8px',
-                                    },
-                                  }
-                                }}
-                                stripe={stripePromise}
-                                key={`stripe-elements-${userCurrency}-${clientSecret}`}
-                              >
-                                <CheckoutForm planType={selectedPlan || 'lifetime'} onSwitchToRedirect={() => handleCheckout(true)} formattedPrice={planDetails.price} />
-                              </Elements>
-                              
-                              {/* More options dropdown */}
-                              <div className="flex flex-col space-y-4 mt-4 items-center">
-                                <div className="max-w-md w-full">
-                                  <button
-                                    type="button"
-                                    onClick={() => setMoreOptionsOpen(!moreOptionsOpen)}
-                                    className="text-[#4f46e6] hover:text-[#4338ca] text-sm font-medium flex items-center"
-                                  >
-                                    More options
-                                    <FiChevronDown className={`ml-1 transition-transform ${moreOptionsOpen ? 'rotate-180' : ''}`} />
-                                  </button>
-                                  
-                                  {moreOptionsOpen && (
-                                    <div className="mt-4 transition-all duration-200 ease-in-out">
-                                      {/* Payment options help message */}
-                                      <div className="p-3 -mx-10 bg-indigo-50 border border-indigo-100 rounded-md mb-2">
-                                        <p className="text-xs text-[#4f46e6] flex items-start">
-                                          <FiInfo className="flex-shrink-0 h-4 w-4 mr-2 mt-0.5" />
-                                          <span>
-                                            <strong className="block mb-1">Can't see multiple payment options?</strong>
-                                            Some payment methods may not be available in your region or with your selected currency. Try refreshing the checkout session, changing currency, switching to desktop view, or using a different browser. Credit card payments and 'Pay with Link' are always available.
-                                          </span>
-                                        </p>
-                                      </div>
-                                      
-                                      {/* Need a different way to checkout? button */}
-                                      <div className="flex justify-center w-full relative">
-                                        <div className="flex items-center">
-                                          <button
-                                            type="button"
-                                            onClick={() => handleCheckout(true)}
-                                            className="text-[#4f46e6] hover:text-[#4338ca] text-sm font-medium py-2"
-                                          >
-                                            Need a different way to checkout?
-                                          </button>
-                                          
-                                          {userCurrency !== 'USD' && (
-                                            <div className="relative">
-                                              <div className="group cursor-help">
-                                                <FiInfo className="h-3 w-3 text-[#4f46e6] hover:text-[#4338ca] ml-1 relative -top-1" />
-                                                <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
-                                                  <div className="p-2.5 rounded-md shadow-md" style={{ backgroundColor: 'rgba(238, 242, 255, 0.7)', borderColor: 'rgba(224, 231, 255, 0.7)' }}>
-                                                    <p className="text-xs text-[#4f46e6]">
-                                                      Prices are shown in {userCurrency} for your convenience. The payment will be shown in USD and auto-converted to the selected currency by the payment processor.
-                                                    </p>
-                                                  </div>
-                                                  <div className="w-3 h-3 border-r border-b absolute -bottom-1.5 left-1/2 -translate-x-1/2 transform rotate-45" style={{ backgroundColor: 'rgba(238, 242, 255, 0.7)', borderColor: 'rgba(224, 231, 255, 0.7)' }}></div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Currency Conversion Notice - Removed static box */}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                {/* Secure Payment Methods section - directly below the Complete Your Order box */}
-                <div className="rounded-lg bg-transparent p-3 mt-3">
-                  <h3 className="text-lg font-semibold text-[#374151] mb-4 text-center">
-                    Secure Payment Methods
-                  </h3>
-                  <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-4 relative h-14"> {/* Increased height to accommodate animation */}
-                    {/* Center card (Discover) */}
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 z-10 transition-transform duration-300 ease-out hover:scale-110 hover:z-50" style={{ '--center-offset-x': '24px' } as React.CSSProperties}>
-                      <img src="/secure payment methods/discover.svg" alt="Discover" className="h-6 sm:h-8 rounded-md animate-slide-in-center" style={{ animationDelay: '0s' }} />
-                    </div>
-                    
-                    {/* Left side cards */}
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '220px' } as React.CSSProperties}>
-                      <img src="/secure payment methods/visa.svg" alt="Visa" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.1s' }} />
-                    </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '165px' } as React.CSSProperties}>
-                      <img src="/secure payment methods/mastercard.svg" alt="Mastercard" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.3s' }} />
-                    </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '110px' } as React.CSSProperties}>
-                      <img src="/secure payment methods/maestro.svg" alt="Maestro" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.5s' }} />
-                    </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '55px' } as React.CSSProperties}>
-                      <img src="/secure payment methods/amex.svg" alt="American Express" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.7s' }} />
-                    </div>
-                    
-                    {/* Right side cards */}
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '55px' } as React.CSSProperties}>
-                      <img src="/secure payment methods/diners.svg" alt="Diners Club" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.7s' }} />
-                    </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '110px' } as React.CSSProperties}>
-                      <img src="/secure payment methods/cartes-bancaires.svg" alt="Cartes Bancaires" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.5s' }} />
-                    </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '165px' } as React.CSSProperties}>
-                      <img src="/secure payment methods/apple-pay.svg" alt="Apple Pay" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.3s' }} />
-                    </div>
-                    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '220px' } as React.CSSProperties}>
-                      <img src="/secure payment methods/google-pay.svg" alt="Google Pay" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.1s' }} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Need help choosing section */}
-                <div className="text-center mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <h3 className="text-base font-medium text-[#1e293b] mb-2">Need help choosing the right plan?</h3>
-                  <a
-                    href="https://getino.app/support"
-                    className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200 text-base font-medium inline-flex items-center"
-                  >
-                    Contact support
-                  </a>
-                </div>
-              </div>
-
-              {/* Right column - Plan details */}
-              <div className="w-full md:flex-[0.37] md:flex md:justify-end">
-                <div className="space-y-6 w-[95%]">
-                  {/* Plan details card */}
-                  <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100 relative">
-                    <div className="p-6">
-                      {plan && selectedPlan ? (
-                        <>
-                          {/* Plan name */}
-                          <h3 className="text-lg font-bold text-gray-900 mb-2">{planDetails.name}</h3>
-                          
-                          {/* Plan tags as diagonal banners */}
-                          {planDetails.popular && (
-                            <div className="absolute top-4 right-[-35px] w-[140px] transform rotate-45 bg-blue-100 text-blue-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-blue-200">
-                              <span className="pl-1">Popular</span>
+                            <div className="ml-3">
+                              <h5 className="text-sm font-medium text-gray-900">Premium community</h5>
+                              <p className="text-sm text-gray-500">Connect with successful members and share strategies</p>
                             </div>
-                          )}
-                          {planDetails.recommended && (
-                            <div className="absolute top-8 right-[-40px] w-[160px] transform rotate-45 bg-green-100 text-green-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-green-200">
-                              <span className="pr-[0.625rem] flex items-center justify-center">Recommended</span>
+                          </div>
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
+                              <FiAward className="h-4 w-4 text-blue-600" />
                             </div>
-                          )}
-                          {planDetails.special && (
-                            <div className="absolute top-5 right-[-36px] w-[140px] transform rotate-45 bg-amber-100 text-amber-800 text-xs text-center py-1 font-normal shadow-sm z-10 overflow-hidden border-t border-b border-amber-200">
-                              <span>Best Value</span>
+                            <div className="ml-3">
+                              <h5 className="text-sm font-medium text-gray-900">Priority support</h5>
+                              <p className="text-sm text-gray-500">Get help when you need it with priority customer service</p>
                             </div>
-                          )}
-                          
-                          {/* Price */}
-                          <div className="mb-4">
-                            <span className="text-2xl font-bold text-gray-900">{planDetails.price}</span>
-                            {plan !== 'lifetime' && <span className="text-gray-500 text-sm">/{plan === 'yearly' ? 'year' : 'month'}</span>}
-                          </div>
-                          
-                          {/* Features */}
-                          <div className="mb-4">
-                            <h4 className="text-sm font-medium text-gray-900 mb-2">Features included:</h4>
-                            <ul className="space-y-2">
-                              {plan === 'monthly' && (
-                                <>
-                                  <li className="flex items-start">
-                                    <FiUnlock className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Full access to all opportunities</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiFilter className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Advanced search with filters</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiBarChart2 className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Detailed Earnings Reports</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiFileText className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Detailed instructions & direct links</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiAward className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Priority support</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiTrendingUp className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Earnings tracking & analytics</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiBell className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Push notifications</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiInbox className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Weekly opportunity digest</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiPhone className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Provider contact information</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiAlertCircle className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Custom opportunity alerts</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiUsers className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Premium community features</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiRefreshCw className={`h-4 w-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Free updates during subscription</span>
-                                  </li>
-                                </>
-                              )}
-                              {plan === 'yearly' && (
-                                <>
-                                  <li className="flex items-start">
-                                    <FiPackage className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">All monthly features</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <BsCash className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">
-                                      {calculateDynamicSavingsText()}
-                                    </span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiClock className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Early access to new features</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiHeadphones className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">VIP support</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiGift className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Exclusive opportunities</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiRefreshCw className={`h-4 w-4 text-green-600 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Free updates during subscription</span>
-                                  </li>
-                                </>
-                              )}
-                              {plan === 'lifetime' && (
-                                <>
-                                  <li className="flex items-start">
-                                    <FiPackage className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">All yearly features</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <BsCash className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Never pay again</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiRefreshCw className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Lifetime updates forever</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiHeadphones className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Premium support</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiZap className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Early access to all new features</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiUsers className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">Exclusive community access</span>
-                                  </li>
-                                  <li className="flex items-start">
-                                    <FiCreditCard className={`h-4 w-4 text-amber-500 mr-2 flex-shrink-0 mt-0.5`} />
-                                    <span className="text-xs text-gray-600">No recurring payments</span>
-                                </li>
-                                </>
-                              )}
-                            </ul>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-center py-8">
-                          <div className="mx-auto h-12 w-12 text-[#d4a373] mb-4">
-                            <FiPackage className="h-12 w-12" />
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a Plan</h3>
-                          <p className="text-gray-500">Select a plan to see detailed features and pricing</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Limited availability card */}
-                  <div className="rounded-lg bg-blue-50 overflow-hidden border border-blue-100">
-                    <div className="flex items-center p-4">
-                      <div className="flex-shrink-0 mr-4">
-                        <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <FiClock className="h-6 w-6 text-blue-600" />
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-blue-800 text-base">Limited availability!</h4>
-                        <p className="text-blue-700 text-sm">Only <span className="font-bold">10</span> spots left.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Money-back guarantee card */}
-                  <div className="rounded-lg bg-green-50 overflow-hidden border border-green-100">
-                    <div className="flex items-center p-4">
-                      <div className="flex-shrink-0 mr-4">
-                        <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-                          <FiShield className="h-6 w-6 text-green-600" />
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-green-800 text-xs md:text-sm">30-Day Money-Back Guarantee</h4>
-                        <p className="text-gray-600 text-xs mt-2">Not satisfied? Get a full refund, no questions asked.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Why choose Getino Premium? */}
-                  <div className="rounded-lg shadow-md border border-gray-200 overflow-hidden bg-white mt-4">
-                    <div className="p-6">
-                      <h4 className="text-base font-semibold text-gray-900 mb-4">Why choose Getino Premium?</h4>
-                      <div className="space-y-4">
-                        <div className="flex items-start">
-                          <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
-                            <FiStar className="h-4 w-4 text-blue-600" />
-                          </div>
-                          <div className="ml-3">
-                            <h5 className="text-sm font-medium text-gray-900">Higher quality opportunities</h5>
-                            <p className="text-sm text-gray-500">Access vetted, high-paying opportunities not available to free users</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start">
-                          <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
-                            <FiUsers className="h-4 w-4 text-blue-600" />
-                          </div>
-                          <div className="ml-3">
-                            <h5 className="text-sm font-medium text-gray-900">Premium community</h5>
-                            <p className="text-sm text-gray-500">Connect with successful members and share strategies</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start">
-                          <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
-                            <FiAward className="h-4 w-4 text-blue-600" />
-                          </div>
-                          <div className="ml-3">
-                            <h5 className="text-sm font-medium text-gray-900">Priority support</h5>
-                            <p className="text-sm text-gray-500">Get help when you need it with priority customer service</p>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Testimonials for the right column */}
-                  <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100 mt-6">
-                    <div className="p-6">
-                      {/* Avatar circles representing users */}
-                      <div className="flex -space-x-2 mb-4 justify-center">
-                        <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-50">
-                          <img 
-                            src="https://randomuser.me/api/portraits/women/18.jpg" 
-                            alt="User" 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-40">
-                          <img 
-                            src="https://randomuser.me/api/portraits/men/45.jpg" 
-                            alt="User" 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-30">
-                          <img 
-                            src="https://randomuser.me/api/portraits/women/68.jpg" 
-                            alt="User" 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-20">
-                          <img 
-                            src="https://randomuser.me/api/portraits/men/22.jpg" 
-                            alt="User" 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-10">
-                          <img 
-                            src="https://randomuser.me/api/portraits/women/88.jpg" 
-                            alt="User" 
-                            className="w-full h-full object-cover object-right"
-                          />
-                        </div>
-                        <div className="w-10 w-14 rounded-full border-2 border-white bg-blue-500 flex items-center justify-center text-white text-sm font-bold shadow-sm relative z-0">
-                          +342
-                        </div>
-                      </div>
-                      
-                      <div className="text-center">
-                        <h3 className="text-sm font-bold flex items-center justify-center">
-                          <FiUsers className="mr-2 text-blue-500" />
-                          Join over 5,000 active users
-                        </h3>
-
-                        <button 
-                          onClick={() => setShowTestimonials(!showTestimonials)}
-                          className="mt-2 mx-auto text-blue-500 hover:text-blue-700 text-sm flex items-center justify-center w-6 h-6"
-                          aria-label={showTestimonials ? "Hide reviews" : "Show reviews"}
-                        >
-                          {showTestimonials ? <FiChevronUp /> : <FiChevronDown />}
-                        </button>
-                      </div>
-                      
-                      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showTestimonials ? 'opacity-100 mt-6' : 'max-h-0 opacity-0'}`}>
-                        <div className="space-y-3">
-                          {testimonials.slice(0, 5).map((testimonial, index) => (
-                            <div key={index} className="border-b border-gray-200 pb-3 last:border-b-0 last:pb-0">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="text-xs font-medium text-gray-700">
-                                  {testimonial.name}
-                                </div>
-                                <div className="flex items-center text-xs text-gray-500">
-                                  {testimonial.verified && (
-                                    <span className="flex items-center mr-2 text-green-600">
-                                      Verified
-                                    </span>
-                                  )}
-                                  <span>{testimonial.date}</span>
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-600 italic mb-1">
-                                {testimonial.name === "James K." && 
-                                  <>"<strong>Paid for itself in a day</strong>. Incredible value for the price."</>
-                                }
-                                {testimonial.name === "Dana R." && 
-                                  <>"<strong>Best investment this year</strong>. The opportunities are high-quality and the support is excellent."</>
-                                }
-                                {testimonial.name === "Michael T." && 
-                                  <>"The premium features are definitely worth it! I've found incredible opportunities that have helped me earn while studying."</>
-                                }
-                                {testimonial.name === "Sarah J." && 
-                                  <>"<strong>Made $2,000 in my first month!</strong> The opportunities are high-quality and legitimate."</>
-                                }
-                                {testimonial.name === "Robert L." && 
-                                  <>"The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and <strong>the features are amazing</strong>."</>
-                                }
-                              </p>
-                            </div>
-                          ))}
+                    {/* Testimonials for the right column */}
+                    <div className="rounded-lg shadow overflow-hidden bg-white border border-gray-100 mt-6">
+                      <div className="p-6">
+                        {/* Avatar circles representing users */}
+                        <div className="flex -space-x-2 mb-4 justify-center">
+                          <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-50">
+                            <img 
+                              src="https://randomuser.me/api/portraits/women/18.jpg" 
+                              alt="User" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-40">
+                            <img 
+                              src="https://randomuser.me/api/portraits/men/45.jpg" 
+                              alt="User" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-30">
+                            <img 
+                              src="https://randomuser.me/api/portraits/women/68.jpg" 
+                              alt="User" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-20">
+                            <img 
+                              src="https://randomuser.me/api/portraits/men/22.jpg" 
+                              alt="User" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-sm relative z-10">
+                            <img 
+                              src="https://randomuser.me/api/portraits/women/88.jpg" 
+                              alt="User" 
+                              className="w-full h-full object-cover object-right"
+                            />
+                          </div>
+                          <div className="w-10 w-14 rounded-full border-2 border-white bg-blue-500 flex items-center justify-center text-white text-sm font-bold shadow-sm relative z-0">
+                            +342
+                          </div>
                         </div>
                         
-                        {/* Total rating and reviews section */}
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div className="flex mr-2">
-                                {/* First 4 full stars */}
-                                {[...Array(4)].map((_, i) => (
-                                  <FiStar 
-                                    key={i} 
-                                    className="h-4 w-4 text-amber-400 fill-amber-400" 
-                                  />
-                                ))}
-                                {/* Half-filled 5th star */}
-                                <div className="relative h-4 w-4">
-                                  {/* Empty star as background */}
-                                  <FiStar className="h-4 w-4 text-amber-400 absolute" />
-                                  {/* Half-filled star using overflow hidden */}
-                                  <div className="absolute overflow-hidden w-[50%] h-4">
-                                    <FiStar className="h-4 w-4 text-amber-400 fill-amber-400" />
+                        <div className="text-center">
+                          <h3 className="text-sm font-bold flex items-center justify-center">
+                            <FiUsers className="mr-2 text-blue-500" />
+                            Join over 5,000 active users
+                          </h3>
+
+                          <button 
+                            onClick={() => setShowTestimonials(!showTestimonials)}
+                            className="mt-2 mx-auto text-blue-500 hover:text-blue-700 text-sm flex items-center justify-center w-6 h-6"
+                            aria-label={showTestimonials ? "Hide reviews" : "Show reviews"}
+                          >
+                            {showTestimonials ? <FiChevronUp /> : <FiChevronDown />}
+                          </button>
+                        </div>
+                        
+                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showTestimonials ? 'opacity-100 mt-6' : 'max-h-0 opacity-0'}`}>
+                          <div className="space-y-3">
+                            {testimonials.slice(0, 5).map((testimonial, index) => (
+                              <div key={index} className="border-b border-gray-200 pb-3 last:border-b-0 last:pb-0">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="text-xs font-medium text-gray-700">
+                                    {testimonial.name}
+                                  </div>
+                                  <div className="flex items-center text-xs text-gray-500">
+                                    {testimonial.verified && (
+                                      <span className="flex items-center mr-2 text-green-600">
+                                        Verified
+                                      </span>
+                                    )}
+                                    <span>{testimonial.date}</span>
                                   </div>
                                 </div>
+                                <p className="text-sm text-gray-600 italic mb-1">
+                                  {testimonial.name === "James K." && 
+                                    <>"<strong>Paid for itself in a day</strong>. Incredible value for the price."</>
+                                  }
+                                  {testimonial.name === "Dana R." && 
+                                    <>"<strong>Best investment this year</strong>. The opportunities are high-quality and the support is excellent."</>
+                                  }
+                                  {testimonial.name === "Michael T." && 
+                                    <>"The premium features are definitely worth it! I've found incredible opportunities that have helped me earn while studying."</>
+                                  }
+                                  {testimonial.name === "Sarah J." && 
+                                    <>"<strong>Made $2,000 in my first month!</strong> The opportunities are high-quality and legitimate."</>
+                                  }
+                                  {testimonial.name === "Robert L." && 
+                                    <>"The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and <strong>the features are amazing</strong>."</>
+                                  }
+                                </p>
                               </div>
-                              <span className="text-sm font-bold text-gray-700">4.8</span>
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Based on <span className="font-medium">347 reviews</span>
+                            ))}
+                          </div>
+                          
+                          {/* Total rating and reviews section */}
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <div className="flex mr-2">
+                                  {/* First 4 full stars */}
+                                  {[...Array(4)].map((_, i) => (
+                                    <FiStar 
+                                      key={i} 
+                                      className="h-4 w-4 text-amber-400 fill-amber-400" 
+                                    />
+                                  ))}
+                                  {/* Half-filled 5th star */}
+                                  <div className="relative h-4 w-4">
+                                    {/* Empty star as background */}
+                                    <FiStar className="h-4 w-4 text-amber-400 absolute" />
+                                    {/* Half-filled star using overflow hidden */}
+                                    <div className="absolute overflow-hidden w-[50%] h-4">
+                                      <FiStar className="h-4 w-4 text-amber-400 fill-amber-400" />
+                                    </div>
+                                  </div>
+                                </div>
+                                <span className="text-sm font-bold text-gray-700">4.8</span>
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                Based on <span className="font-medium">347 reviews</span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2319,154 +2334,146 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Trust badges and icons section */}
-            <div className="pt-4">
-              {/* Benefits section */}
-              <div className="pt-8 pb-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <div className="text-center">
-                  <div className="flex justify-center mb-4">
-                    <div className="h-12 w-12 rounded-full flex items-center justify-center">
-                      <FiZap className="h-6 w-6 text-[#1e293b]" />
+              {/* Trust badges and icons section */}
+              <div className="pt-4">
+                {/* Benefits section */}
+                <div className="pt-8 pb-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                  <div className="text-center">
+                    <div className="flex justify-center mb-4">
+                      <div className="h-12 w-12 rounded-full flex items-center justify-center">
+                        <FiZap className="h-6 w-6 text-[#1e293b]" />
+                      </div>
                     </div>
+                    <h3 className="text-lg font-semibold text-[#1e293b] mb-2">Instant Access</h3>
+                    <p className="text-[#475569] text-sm">Get started immediately with your chosen plan</p>
                   </div>
-                  <h3 className="text-lg font-semibold text-[#1e293b] mb-2">Instant Access</h3>
-                  <p className="text-[#475569] text-sm">Get started immediately with your chosen plan</p>
-                </div>
 
-                <div className="text-center">
-                  <div className="flex justify-center mb-4">
-                    <div className="h-12 w-12 rounded-full flex items-center justify-center">
-                      <FiClock className="h-6 w-6 text-[#1e293b]" />
+                  <div className="text-center">
+                    <div className="flex justify-center mb-4">
+                      <div className="h-12 w-12 rounded-full flex items-center justify-center">
+                        <FiClock className="h-6 w-6 text-[#1e293b]" />
+                      </div>
                     </div>
+                    <h3 className="text-lg font-semibold text-[#1e293b] mb-2">Cancel Anytime</h3>
+                    <p className="text-[#475569] text-sm">No long-term commitments required</p>
                   </div>
-                  <h3 className="text-lg font-semibold text-[#1e293b] mb-2">Cancel Anytime</h3>
-                  <p className="text-[#475569] text-sm">No long-term commitments required</p>
-                </div>
 
-                <div className="text-center">
-                  <div className="flex justify-center mb-4">
-                    <div className="h-12 w-12 rounded-full flex items-center justify-center">
-                      <FiAward className="h-6 w-6 text-[#1e293b]" />
+                  <div className="text-center">
+                    <div className="flex justify-center mb-4">
+                      <div className="h-12 w-12 rounded-full flex items-center justify-center">
+                        <FiAward className="h-6 w-6 text-[#1e293b]" />
+                      </div>
                     </div>
-                  </div>
-                  <h3 className="text-lg font-semibold text-[#1e293b] mb-2">Money-Back Guarantee</h3>
-                  <p className="text-[#475569] text-sm">30-day satisfaction guarantee</p>
-                </div>
-              </div>
-              
-              {/* FAQ Section */}
-              <div className="max-w-3xl mx-auto pt-4 pb-12">
-                <div className="space-y-4">
-                  {faqs.map((faq, index) => (
-                    <div key={index} className="py-2">
-                      <button
-                        onClick={() => toggleFAQ(index)}
-                        className="w-full text-center text-gray-700 hover:text-gray-900 focus:outline-none"
-                      >
-                        <h3 className="text-lg font-medium">{faq.question}</h3>
-                      </button>
-                      {openFAQ === index && (
-                        <div className="mt-3 px-4 text-center">
-                          <p className="text-base text-gray-600 leading-relaxed">{faq.answer}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-8 pb-0 border-t border-[#f3f4f7]">
-                <div className="flex flex-wrap justify-center items-center gap-3 mb-4">
-                  <div>
-                    <img 
-                      src="/security badges/ssl-256bit-secured.svg" 
-                      alt="SSL Secured" 
-                      className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <img 
-                      src="/security badges/pci-compliant-badge.svg" 
-                      alt="PCI Compliant" 
-                      className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <img 
-                      src="/security badges/verified-by-visa.svg" 
-                      alt="Verified by VISA" 
-                      className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <img 
-                      src="/security badges/mcafee-secure.svg" 
-                      alt="McAfee Secure" 
-                      className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <img 
-                      src="/security badges/norton-secured.svg" 
-                      alt="Norton Secured" 
-                      className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <img 
-                      src="/security badges/secure-checkout.svg" 
-                      alt="Secure Checkout" 
-                      className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <img 
-                      src="/security badges/secure-payment-badge.svg" 
-                      alt="Secure Payment" 
-                      className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
-                    />
+                    <h3 className="text-lg font-semibold text-[#1e293b] mb-2">Money-Back Guarantee</h3>
+                    <p className="text-[#475569] text-sm">30-day satisfaction guarantee</p>
                   </div>
                 </div>
                 
-                <div className="text-center mt-6">
-                  <p className="text-[#4b5563] font-light">Your payment is secure and encrypted. We never store your card details.</p>
+                {/* FAQ Section */}
+                <div className="max-w-3xl mx-auto pt-4 pb-12">
+                  <div className="space-y-4">
+                    {faqs.map((faq, index) => (
+                      <div key={index} className="py-2">
+                        <button
+                          onClick={() => toggleFAQ(index)}
+                          className="w-full text-center text-gray-700 hover:text-gray-900 focus:outline-none"
+                        >
+                          <h3 className="text-lg font-medium">{faq.question}</h3>
+                        </button>
+                        {openFAQ === index && (
+                          <div className="mt-3 px-4 text-center">
+                            <p className="text-base text-gray-600 leading-relaxed">{faq.answer}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                
-                <div className="flex flex-col justify-center items-center mt-6 space-y-4">
-                  {/* Links - centered */}
-                  <div className="flex justify-center space-x-4 text-sm items-center">
-                    <a href="https://getino.app/terms" className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200">Terms of Service</a>
-                    <span className="text-[#9ca3af] text-xl flex items-center">·</span>
-                    <a href="https://getino.app/privacy" className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200">Privacy Policy</a>
-                    <span className="text-[#9ca3af] text-xl flex items-center">·</span>
-                    <a href="https://getino.app/help" className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200">Refund Policy</a>
+
+                <div className="pt-8 pb-0 border-t border-[#f3f4f7]">
+                  <div className="flex flex-wrap justify-center items-center gap-3 mb-4">
+                    <div>
+                      <img 
+                        src="/security badges/ssl-256bit-secured.svg" 
+                        alt="SSL Secured" 
+                        className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                      />
+                    </div>
+                    <div>
+                      <img 
+                        src="/security badges/pci-compliant-badge.svg" 
+                        alt="PCI Compliant" 
+                        className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                      />
+                    </div>
+                    <div>
+                      <img 
+                        src="/security badges/verified-by-visa.svg" 
+                        alt="Verified by VISA" 
+                        className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                      />
+                    </div>
+                    <div>
+                      <img 
+                        src="/security badges/mcafee-secure.svg" 
+                        alt="McAfee Secure" 
+                        className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                      />
+                    </div>
+                    <div>
+                      <img 
+                        src="/security badges/norton-secured.svg" 
+                        alt="Norton Secured" 
+                        className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                      />
+                    </div>
+                    <div>
+                      <img 
+                        src="/security badges/secure-checkout.svg" 
+                        alt="Secure Checkout" 
+                        className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                      />
+                    </div>
+                    <div>
+                      <img 
+                        src="/security badges/secure-payment-badge.svg" 
+                        alt="Secure Payment" 
+                        className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
+                      />
+                    </div>
                   </div>
                   
-                  {/* Mobile Layout - Language button below links */}
-                  <div className="sm:hidden mt-12 pt-4">
-                    <CheckoutGoogleTranslate />
+                  <div className="text-center mt-6">
+                    <p className="text-[#4b5563] font-light">Your payment is secure and encrypted. We never store your card details.</p>
                   </div>
                   
-                  {/* Desktop Layout - Language button below links */}
-                  <div className="hidden sm:block mt-16 pt-4">
-                    <CheckoutGoogleTranslate />
+                  <div className="flex flex-col justify-center items-center mt-6 space-y-4">
+                    {/* Links - centered */}
+                    <div className="flex justify-center space-x-4 text-sm items-center">
+                      <a href="https://getino.app/terms" className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200">Terms of Service</a>
+                      <span className="text-[#9ca3af] text-xl flex items-center">·</span>
+                      <a href="https://getino.app/privacy" className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200">Privacy Policy</a>
+                      <span className="text-[#9ca3af] text-xl flex items-center">·</span>
+                      <a href="https://getino.app/help" className="text-[#2663eb] hover:text-blue-500 transition-colors duration-200">Refund Policy</a>
+                    </div>
+                    
+                    {/* Mobile Layout - Language button below links */}
+                    <div className="sm:hidden mt-12 pt-4">
+                      <CheckoutGoogleTranslate />
+                    </div>
+                    
+                    {/* Desktop Layout - Language button below links */}
+                    <div className="hidden sm:block mt-16 pt-4">
+                      <CheckoutGoogleTranslate />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </CheckoutPageWrapper>
+      </CheckoutPageWrapper>
+    </ClientOnly>
   );
 } 
-
-
-// This ensures the page is always server-rendered and not statically generated
-export const getServerSideProps = async () => {
-  return {
-    props: {}
-  };
-};
