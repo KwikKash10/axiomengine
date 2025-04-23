@@ -316,3 +316,11 @@ Note: There are some linter errors in the amount conversion logic section of che
 - Confirmed hydration errors are resolved
 - Tested checkout flow on multiple browsers and devices
 - Validated mobile responsive behavior
+
+### Deployment Information (April 24, 2025)
+- Successfully deployed to Vercel: https://checkout-cbwiy7pu7-kwikkashs-projects.vercel.app
+- Successfully deployed to Netlify: https://checkout.getino.app
+- Encountered build issues related to React context in SSR environments
+- Applied fixes to make AuthContext SSR-compatible
+- Updated webpackDevMiddleware configuration for Next.js 15 compatibility
+- SSR build shows warnings but deployments function correctly in production
