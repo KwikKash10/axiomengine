@@ -282,3 +282,37 @@ Note: There are some linter errors in the amount conversion logic section of che
   ```
 - This is especially important for PayPal integration which requires all address fields
 - For payment methods that need complete billing details, consider using 'auto' instead of 'never' in fields configuration
+
+## Stable Release Documentation - v1.7.3 (April 23, 2025)
+
+### Release Details
+- Commit Hash: 8de35e08e2615f89727aea4b392ea3c00b91ff44
+- Author: KwikKash10
+- Timestamp: Wed Apr 23 10:49:29 2025 +0100
+- Commit Message: fix: Fix PayPal integration and improve client-side hydration in _app.tsx
+- Branch Name: stable/v1.7.1
+- Tag Name: v1.7.3
+- Pull Request: https://github.com/KwikKash10/checkout/compare/main...stable/v1.7.1
+
+### Key Changes
+1. Fixed PayPal integration error:
+   - Fixed IntegrationError with PaymentElement billing_details
+   - Added missing required billing details in stripe.confirmPayment calls
+   - Added default values for billing_details.address fields when PaymentElement had them set to 'never'
+   - Applied fix across all payment pages: checkout.tsx, payment-element.tsx, embedded.tsx, and embedded-components.tsx
+
+2. Improved client-side hydration in _app.tsx:
+   - Added conditional rendering to prevent hydration mismatch errors
+   - Added isClient state to track client-side rendering
+   - Ensured embedded checkout components only render on client-side
+   - Improved handling of client vs. server rendering states
+
+3. Removed unused dynamic.config.js file
+4. Updated dependencies in next.config.js
+5. Added Testimonials image assets
+
+### Testing and Verification
+- Verified PayPal payments work correctly in test mode
+- Confirmed hydration errors are resolved
+- Tested checkout flow on multiple browsers and devices
+- Validated mobile responsive behavior
