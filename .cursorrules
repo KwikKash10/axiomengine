@@ -292,7 +292,7 @@ Note: There are some linter errors in the amount conversion logic section of che
 - Commit Message: fix: Fix PayPal integration and improve client-side hydration in _app.tsx
 - Branch Name: stable/v1.7.1
 - Tag Name: v1.7.3
-- Pull Request: https://github.com/KwikKash10/checkout/compare/main...stable/v1.7.1
+- Pull Request: https://github.com/KwikKash10/checkout/pull/10
 
 ### Key Changes
 1. Fixed PayPal integration error:
