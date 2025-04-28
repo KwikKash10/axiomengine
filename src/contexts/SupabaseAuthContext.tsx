@@ -22,15 +22,13 @@ interface AuthContextType {
   signOut: () => Promise<void>
 }
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [supabase] = useState(() => 
-    createClient(
-      import.meta.env.VITE_SUPABASE_URL || '',
-      import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-    )
-  )
+  const supabase = createClient(supabaseUrl, supabaseAnonKey)
   
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [userData, setUserData] = useState<UserData | null>(null)

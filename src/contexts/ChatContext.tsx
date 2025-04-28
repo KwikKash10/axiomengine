@@ -20,10 +20,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsOpen(false)
   }
   
-  const sendMessage = async (message: string) => {
+  const sendMessage = async (message: string): Promise<void> => {
     console.log('Sending message:', message)
     // Simulate API call
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       setTimeout(() => {
         resolve()
       }, 500)

@@ -9,17 +9,20 @@ import PremiumFeatureLock from '../components/PremiumFeatureLock';
 import { useChat } from '../contexts/ChatContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { useAuth } from '../contexts/SupabaseAuthContext';
+
+interface Feature {
+  title: string;
+  description: string;
+  emotion: string;
+}
 
 const InoAIPremium: React.FC = () => {
   const { openChat } = useChat();
-  const { user } = useAuth();
   const [mascotEmotion, setMascotEmotion] = useState<'neutral' | 'thinking' | 'speaking' | 'analyzing' | 'happy' | 'sleeping'>('happy');
   const [showSpeechBubble, setShowSpeechBubble] = useState(false);
   const [speechText, setSpeechText] = useState('');
   const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [selectedSection, setSelectedSection] = useState<string | null>(null);
 
   useEffect(() => {
     // Simulate loading with a small delay
@@ -100,6 +103,10 @@ const InoAIPremium: React.FC = () => {
     }
   ];
 
+  const handleFeatureClick = (feature: Feature) => {
+    displaySpeech(`${feature.title}: ${feature.description}`, feature.emotion === 'listening' ? 'speaking' : feature.emotion as any);
+  };
+
   return (
     <PremiumFeatureLock featureName="INO AI Premium">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -168,8 +175,7 @@ const InoAIPremium: React.FC = () => {
                   transition={{ duration: 0.3, delay: 0.2 + index * 0.1 }}
                   className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => {
-                    setSelectedSection(feature.title);
-                    displaySpeech(`${feature.title}: ${feature.description}`, feature.emotion === 'listening' ? 'speaking' : feature.emotion as any);
+                    handleFeatureClick(feature);
                   }}
                 >
                   <div className="flex items-start">

@@ -20,7 +20,7 @@ const PremiumFeatureLock: React.FC<PremiumFeatureLockProps> = ({
   children,
   featureName = 'this feature'
 }) => {
-  const { user, isLoading } = useAuth()
+  const { isLoading } = useAuth()
 
   // For this deployment, always show the premium content
   // In the actual implementation, this would check the user's subscription status
