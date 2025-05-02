@@ -2073,10 +2073,10 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Why choose Getino Premium? */}
+                  {/* Why choose Getino Pro? */}
                   <div className="rounded-lg shadow-md border border-gray-200 overflow-hidden bg-white mt-4">
                     <div className="p-6">
-                      <h4 className="text-base font-semibold text-gray-900 mb-4">Why choose Getino Premium?</h4>
+                      <h4 className="text-base font-semibold text-gray-900 mb-4">Why choose Getino Pro?</h4>
                       <div className="space-y-4">
                         <div className="flex items-start">
                           <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">

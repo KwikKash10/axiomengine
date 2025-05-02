@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="180" height="180" rx="40" ry="40" fill="rgb(40,41,88)"/>
+    <rect width="180" height="180" rx="40" ry="40" fill="#111133"/>
     
     <!-- Apply a scale transform to make the logo fill more of the viewbox -->
     <g transform="scale(1.3) translate(10, 10)">
-        <path d="M60 24C39.12 24 22.2 40.92 22.2 61.8C22.2 82.68 39.12 99.6 60 99.6C80.88 99.6 97.8 82.68 97.8 61.8C97.8 53.16 94.92 45.24 90.24 38.76" stroke="rgb(252,186,3)" stroke-width="7.2" stroke-linecap="round"/>
+        <path d="M60 24C39.12 24 22.2 40.92 22.2 61.8C22.2 82.68 39.12 99.6 60 99.6C80.88 99.6 97.8 82.68 97.8 61.8C97.8 53.16 94.92 45.24 90.24 38.76" stroke="#ffc111" stroke-width="7.2" stroke-linecap="round"/>
         <path d="M60 33V42M60 81.6V90.6M74.4 51C74.4 43.44 67.92 37.5 60 37.5C52.08 37.5 45.6 43.44 45.6 51C45.6 58.56 52.08 61.8 60 61.8C67.92 61.8 74.4 65.04 74.4 72.6C74.4 80.16 67.92 86.1 60 86.1C52.08 86.1 45.6 80.16 45.6 72.6" stroke="rgb(255,255,255)" stroke-width="6" stroke-linecap="round"/>
         <circle cx="36" cy="36" r="4.8" fill="rgb(255,255,255)" opacity="0.6"/>
     </g>

@@ -708,7 +708,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<any>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(531000); // Updated: 6 days, 3 hours, 30 minutes
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isValidPlan, setIsValidPlan] = useState(false);
   const [showTestimonials, setShowTestimonials] = useState(false);
@@ -1009,10 +1009,26 @@ export default function CheckoutPage() {
   }, [planType]); // Remove router from dependency array to prevent unnecessary rerenders
 
   // Format time remaining
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  const formatTime = (totalSeconds: number) => {
+    if (totalSeconds <= 0) {
+      return "Expired";
+    }
+  
+    const days = Math.floor(totalSeconds / (24 * 3600));
+    const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+  
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+    if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+  
+    // Always add minutes and seconds in mm:ss format
+    const paddedMinutes = String(minutes).padStart(2, '0');
+    const paddedSeconds = String(seconds).padStart(2, '0');
+    parts.push(`${paddedMinutes}:${paddedSeconds}`);
+  
+    return parts.join(' '); // Join parts with a space
   };
 
   // Countdown timer
@@ -1423,7 +1439,7 @@ export default function CheckoutPage() {
     {
       name: "Robert L.",
       role: "Part-time Worker",
-      content: "The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and the features are amazing.",
+      content: <>"The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and <strong>the features are amazing.</strong>"</>,
       stars: 5,
       verified: true,
       date: "2 months ago",
@@ -1444,10 +1460,15 @@ export default function CheckoutPage() {
       answer: "The 14-day free trial includes all premium features, giving you full access to test everything the platform has to offer."
     },
     {
+      question: "Is INO AI included in Getino Pro?",
+      answer: "Yes! INO AI is included in all Getino Pro plans. You'll get access to our advanced AI technology that helps you find and analyze the best opportunities."
+    },
+    {
       question: "Do you have a refund policy?",
       answer: (
         <>
-          Yes! We offer a 30-day refund incentive on all plans. If you're not completely satisfied with your purchase, open a support ticket with your invoice ID. Your satisfaction is our top priority.
+          100% Satisfaction Guarantee
+          Try risk-free for 30 days. If you're not satisfied, we'll refund your payment.
         </>
       )
     },
@@ -1891,7 +1912,7 @@ export default function CheckoutPage() {
                                                   <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
                                                     <div className="p-2.5 rounded-md shadow-md" style={{ backgroundColor: 'rgba(238, 242, 255, 0.7)', borderColor: 'rgba(224, 231, 255, 0.7)' }}>
                                                       <p className="text-xs text-[#4f46e6]">
-                                                        Prices are shown in {userCurrency} for your convenience. The payment will be shown in USD and auto-converted to the selected currency by the payment processor.
+                                                        Prices are shown in {userCurrency} for your convenience. The payment will be shown in USD and auto-converted to the selected currency for payment processing.
                                                       </p>
                                                     </div>
                                                     <div className="w-3 h-3 border-r border-b absolute -bottom-1.5 left-1/2 -translate-x-1/2 transform rotate-45" style={{ backgroundColor: 'rgba(238, 242, 255, 0.7)', borderColor: 'rgba(224, 231, 255, 0.7)' }}></div>
@@ -1920,44 +1941,52 @@ export default function CheckoutPage() {
                     <h3 className="text-lg font-semibold text-[#374151] mb-4 text-center">
                       Secure Payment Methods
                     </h3>
-                    <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-4 relative h-14"> {/* Increased height to accommodate animation */}
+                    <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-4 overflow-hidden relative h-20 w-full max-w-[95%] mx-auto">
                       {/* Center card (Discover) */}
-                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 z-10 transition-transform duration-300 ease-out hover:scale-110 hover:z-50" style={{ '--center-offset-x': '24px' } as React.CSSProperties}>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 z-50 transition-transform duration-300 ease-out hover:scale-110 hover:z-50" style={{ '--center-offset-x': '24px' } as React.CSSProperties}>
                         <img src="/secure payment methods/discover.svg" alt="Discover" className="h-6 sm:h-8 rounded-md animate-slide-in-center" style={{ animationDelay: '0s' }} />
                       </div>
                       
-                      {/* Left side cards */}
-                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '220px' } as React.CSSProperties}>
+                      {/* Left side cards - Responsive values for different screen sizes */}
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" 
+                        style={{ '--offset-x': 'min(160px, 30vw)' } as React.CSSProperties}>
                         <img src="/secure payment methods/visa.svg" alt="Visa" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.1s' }} />
                       </div>
-                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '165px' } as React.CSSProperties}>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" 
+                        style={{ '--offset-x': 'min(120px, 20vw)' } as React.CSSProperties}>
                         <img src="/secure payment methods/mastercard.svg" alt="Mastercard" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.3s' }} />
                       </div>
-                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '110px' } as React.CSSProperties}>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" 
+                        style={{ '--offset-x': 'min(80px, 12vw)' } as React.CSSProperties}>
                         <img src="/secure payment methods/maestro.svg" alt="Maestro" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.5s' }} />
                       </div>
-                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '55px' } as React.CSSProperties}>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" 
+                        style={{ '--offset-x': 'min(40px, 7vw)' } as React.CSSProperties}>
                         <img src="/secure payment methods/amex.svg" alt="American Express" className="h-6 sm:h-8 rounded-md animate-slide-in-right" style={{ animationDelay: '0.7s' }} />
                       </div>
                       
-                      {/* Right side cards */}
-                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '55px' } as React.CSSProperties}>
+                      {/* Right side cards - Responsive values for different screen sizes */}
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible z-40" 
+                        style={{ '--offset-x': 'min(40px, 7vw)' } as React.CSSProperties}>
                         <img src="/secure payment methods/diners.svg" alt="Diners Club" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.7s' }} />
                       </div>
-                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '110px' } as React.CSSProperties}>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible z-30" 
+                        style={{ '--offset-x': 'min(80px, 12vw)' } as React.CSSProperties}>
                         <img src="/secure payment methods/cartes-bancaires.svg" alt="Cartes Bancaires" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.5s' }} />
                       </div>
-                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '165px' } as React.CSSProperties}>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible z-20" 
+                        style={{ '--offset-x': 'min(120px, 20vw)' } as React.CSSProperties}>
                         <img src="/secure payment methods/apple-pay.svg" alt="Apple Pay" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.3s' }} />
                       </div>
-                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible" style={{ '--offset-x': '220px' } as React.CSSProperties}>
+                      <div className="absolute top-1/2 left-1/2 -translate-y-1/2 transition-transform duration-300 ease-out hover:scale-110 hover:z-50 invisible z-10" 
+                        style={{ '--offset-x': 'min(160px, 30vw)' } as React.CSSProperties}>
                         <img src="/secure payment methods/google-pay.svg" alt="Google Pay" className="h-6 sm:h-8 rounded-md animate-slide-in-left" style={{ animationDelay: '0.1s' }} />
                       </div>
                     </div>
                   </div>
 
                   {/* Need help choosing section */}
-                  <div className="text-center mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="text-center mt-0 p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <h3 className="text-base font-medium text-[#1e293b] mb-2">Need help choosing the right plan?</h3>
                     <a
                       href="https://getino.app/support"
@@ -2136,19 +2165,21 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Limited availability card */}
-                    <div className="rounded-lg bg-blue-50 overflow-hidden border border-blue-100">
-                      <div className="flex items-center p-4">
-                        <div className="flex-shrink-0 mr-4">
-                          <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <FiClock className="h-6 w-6 text-blue-600" />
+                    {planType === 'lifetime' && (
+                      <div className="rounded-lg bg-blue-50 overflow-hidden border border-blue-100">
+                        <div className="flex items-center p-4">
+                          <div className="flex-shrink-0 mr-4">
+                            <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                              <FiClock className="h-6 w-6 text-blue-600" />
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-blue-800 text-base">Limited availability!</h4>
+                            <p className="text-blue-700 text-sm">Only <span className="font-bold">12</span> spots left.</p>
                           </div>
                         </div>
-                        <div>
-                          <h4 className="font-medium text-blue-800 text-base">Limited availability!</h4>
-                          <p className="text-blue-700 text-sm">Only <span className="font-bold">10</span> spots left.</p>
-                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Money-back guarantee card */}
                     <div className="rounded-lg bg-green-50 overflow-hidden border border-green-100">
@@ -2159,16 +2190,16 @@ export default function CheckoutPage() {
                           </div>
                         </div>
                         <div>
-                          <h4 className="font-medium text-green-800 text-xs md:text-sm">30-Day Money-Back Guarantee</h4>
-                          <p className="text-gray-600 text-xs mt-2">Not satisfied? Get a full refund, no questions asked.</p>
+                          <h4 className="font-medium text-green-800 text-xs md:text-sm">100% Satisfaction Guarantee</h4>
+                          <p className="text-gray-600 text-xs mt-2">Try risk-free for 30 days. If you're not satisfied, we'll refund your payment.</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Why choose Getino Premium? */}
+                    {/* Why choose Getino Pro? */}
                     <div className="rounded-lg shadow-md border border-gray-200 overflow-hidden bg-white mt-4">
                       <div className="p-6">
-                        <h4 className="text-base font-semibold text-gray-900 mb-4">Why choose Getino Premium?</h4>
+                        <h4 className="text-base font-semibold text-gray-900 mb-4">Why choose Getino Pro?</h4>
                         <div className="space-y-4">
                           <div className="flex items-start">
                             <div className="flex-shrink-0 bg-blue-100 rounded-full p-2">
@@ -2292,7 +2323,7 @@ export default function CheckoutPage() {
                                     <>"<strong>Made $2,000 in my first month!</strong> The opportunities are high-quality and legitimate."</>
                                   }
                                   {testimonial.name === "Robert L." && 
-                                    <>"The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and <strong>the features are amazing</strong>."</>
+                                    <>"The yearly plan is a no-brainer. I've saved so much compared to the monthly plan and <strong>the features are amazing.</strong>"</>
                                   }
                                 </p>
                               </div>
@@ -2431,7 +2462,7 @@ export default function CheckoutPage() {
                     <div>
                       <img 
                         src="/security badges/secure-checkout.svg" 
-                        alt="Secure Checkout" 
+                        alt="Encrypted Checkout" 
                         className="h-10 object-contain transition-all duration-200 hover:scale-105 hover:brightness-110 hover:shadow-sm"
                       />
                     </div>

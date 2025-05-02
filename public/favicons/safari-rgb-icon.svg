@@ -2,8 +2,8 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
     <!-- Apply a scale transform to make the logo fill more of the viewbox -->
     <g transform="scale(1.4) translate(-25.7, -25.7)">
-        <circle cx="90" cy="90" r="60" fill="rgb(40,41,88)"/>
-        <path d="M90 54C69.12 54 52.2 70.92 52.2 91.8C52.2 112.68 69.12 129.6 90 129.6C110.88 129.6 127.8 112.68 127.8 91.8C127.8 83.16 124.92 75.24 120.24 68.76" stroke="rgb(252,186,3)" stroke-width="7.2" stroke-linecap="round"/>
+        <circle cx="90" cy="90" r="60" fill="#111133"/>
+        <path d="M90 54C69.12 54 52.2 70.92 52.2 91.8C52.2 112.68 69.12 129.6 90 129.6C110.88 129.6 127.8 112.68 127.8 91.8C127.8 83.16 124.92 75.24 120.24 68.76" stroke="#ffc111" stroke-width="7.2" stroke-linecap="round"/>
         <path d="M90 63V72M90 111.6V120.6M104.4 81C104.4 73.44 97.92 67.5 90 67.5C82.08 67.5 75.6 73.44 75.6 81C75.6 88.56 82.08 91.8 90 91.8C97.92 91.8 104.4 95.04 104.4 102.6C104.4 110.16 97.92 116.1 90 116.1C82.08 116.1 75.6 110.16 75.6 102.6" stroke="rgb(255,255,255)" stroke-width="6" stroke-linecap="round"/>
         <circle cx="66" cy="66" r="4.8" fill="rgb(255,255,255)" opacity="0.6"/>
     </g>

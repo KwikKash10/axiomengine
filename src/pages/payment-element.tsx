@@ -106,7 +106,7 @@ function CheckoutForm({ onSuccess }: { onSuccess: () => void }) {
               auBecsDebit: 'never',
             },
             business: {
-              name: 'Getino Premium'
+              name: 'Getino Pro'
             },
             layout: {
               type: 'tabs',

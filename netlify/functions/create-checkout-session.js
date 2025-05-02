@@ -46,24 +46,24 @@ exports.handler = async (event, context) => {
     // Product names and descriptions based on plan type
     const productDetails = {
       lifetime: {
-        name: 'Getino Lifetime',
-        description: 'Lifetime access to Getino Premium'
+        name: 'Getino Pro - Lifetime',
+        description: 'Lifetime access to Getino Pro'
       },
       yearly: {
-        name: 'Getino Premium - Yearly',
-        description: 'Annual subscription to Getino Premium'
+        name: 'Getino Pro - Yearly',
+        description: 'Annual subscription to Getino Pro'
       },
       monthly: {
-        name: 'Getino Premium - Monthly',
-        description: 'Monthly subscription to Getino Premium'
+        name: 'Getino Pro - Monthly',
+        description: 'Monthly subscription to Getino Pro'
       },
       'monthly-yearly': {
-        name: 'Getino Premium - Annual (Monthly Billing)',
+        name: 'Getino Pro - Annual (Monthly Billing)',
         description: 'Annual subscription with monthly billing'
       }
     };
 
-    const productName = productDetails[sanitizedPlanType]?.name || 'Getino Premium';
+    const productName = productDetails[sanitizedPlanType]?.name || 'Getino Pro';
     
     // Use predefined price IDs for upsell functionality
     let lineItems;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <svg width="300" height="300" viewBox="45 45 210 210" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="150" cy="150" r="100" fill="#282958"/>
-    <path d="M150 90C115.2 90 87 118.2 87 153C87 187.8 115.2 216 150 216C184.8 216 213 187.8 213 153C213 138.6 208.2 125.4 200.4 114.6" stroke="#fcba03" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="150" cy="150" r="100" fill="#111133"/>
+    <path d="M150 90C115.2 90 87 118.2 87 153C87 187.8 115.2 216 150 216C184.8 216 213 187.8 213 153C213 138.6 208.2 125.4 200.4 114.6" stroke="#ffc111" stroke-width="12" stroke-linecap="round"/>
     <path d="M150 105V120M150 186V201M174 135C174 122.4 163.2 112.5 150 112.5C136.8 112.5 126 122.4 126 135C126 147.6 136.8 153 150 153C163.2 153 174 158.4 174 171C174 183.6 163.2 193.5 150 193.5C136.8 193.5 126 183.6 126 171" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
     <circle cx="110" cy="110" r="8" fill="#ffffff" opacity="0.6"/>
     <g id="dark-version" style="display: none;">
@@ -24,8 +24,8 @@
         <circle cx="150" cy="150" r="101" stroke="#ffffff" stroke-width="1.2" fill="none" opacity="0.9" filter="url(#border-glow)"/>
         <circle cx="150" cy="150" r="125" fill="url(#aura-gradient)" filter="url(#aura-glow)" opacity="1"/>
         <circle cx="150" cy="150" r="130" fill="url(#aura-gradient)" filter="url(#aura-glow)" opacity="0.7"/>
-        <circle cx="150" cy="150" r="100" fill="#282958"/>
-        <path d="M150 90C115.2 90 87 118.2 87 153C87 187.8 115.2 216 150 216C184.8 216 213 187.8 213 153C213 138.6 208.2 125.4 200.4 114.6" stroke="#fcba03" stroke-width="12" stroke-linecap="round"/>
+        <circle cx="150" cy="150" r="100" fill="#111133"/>
+        <path d="M150 90C115.2 90 87 118.2 87 153C87 187.8 115.2 216 150 216C184.8 216 213 187.8 213 153C213 138.6 208.2 125.4 200.4 114.6" stroke="#ffc111" stroke-width="12" stroke-linecap="round"/>
         <path d="M150 105V120M150 186V201M174 135C174 122.4 163.2 112.5 150 112.5C136.8 112.5 126 122.4 126 135C126 147.6 136.8 153 150 153C163.2 153 174 158.4 174 171C174 183.6 163.2 193.5 150 193.5C136.8 193.5 126 183.6 126 171" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
         <circle cx="110" cy="110" r="8" fill="#ffffff" opacity="0.6"/>
     </g>
