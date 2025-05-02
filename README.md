@@ -64,3 +64,66 @@ For the subdomain setup, you should configure DNS:
 - Framer Motion
 - React Router
 - Supabase 
+
+# Axiom Engine - Secure Gemini API Integration
+
+This project includes a server-side secure implementation of Google's Gemini API.
+
+## Security Improvement
+
+The Google Gemini API has been moved from client-side to server-side (via serverless functions) to improve security by preventing API key exposure in the browser.
+
+## Setup Instructions
+
+### 1. Environment Variable Setup
+
+You need to set up an environment variable in your hosting platform (Vercel or Netlify).
+
+#### For Vercel:
+
+1. Go to your project in the Vercel dashboard
+2. Navigate to Settings > Environment Variables
+3. Add a new environment variable:
+   - Name: `GEMINI_API_KEY`
+   - Value: `your_gemini_api_key_here`
+4. Save the changes and redeploy your application
+
+#### For Netlify:
+
+1. Go to your project in the Netlify dashboard
+2. Navigate to Site settings > Build & deploy > Environment
+3. Add a new environment variable:
+   - Key: `GEMINI_API_KEY`
+   - Value: `your_gemini_api_key_here`
+4. Save the changes and redeploy your application
+
+### 2. Serverless Function
+
+The API endpoint is located at:
+```
+/api/gemini
+```
+
+This endpoint handles all communication with the Gemini API and keeps your API key secure.
+
+### 3. Testing
+
+After deploying, test the application to ensure:
+- The chat functionality works as expected
+- No API keys are visible in the browser console
+- Server-side error handling works correctly
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. Check that the `GEMINI_API_KEY` environment variable is set correctly
+2. Verify the serverless function is deployed correctly
+3. Check the Vercel/Netlify function logs for errors
+
+## Security Benefits
+
+- API key is no longer exposed in the browser
+- All API calls are made server-side
+- Access control can be implemented on the server
+- API usage can be monitored and limited as needed 

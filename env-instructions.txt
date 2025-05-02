@@ -1,0 +1,22 @@
+# Instructions for setting up Supabase authentication in Axiom Engine
+
+To fix the "Invalid API key" error, you need to create a `.env` file in the root directory of your Axiom Engine project with the following content:
+
+```
+# Supabase configuration
+# The URL is correct (based on the 401 error)
+VITE_SUPABASE_URL=https://ccbvfyyxdlojebatfupf.supabase.co
+
+# IMPORTANT: Copy the correct anon key from your main app
+# The current key is invalid (getting 401 error)
+VITE_SUPABASE_ANON_KEY=your-correct-anon-key-here
+```
+
+Steps to resolve this issue:
+
+1. Find your main app's `.env` file and copy the value for `VITE_SUPABASE_ANON_KEY`
+2. Create a new file named `.env` in the Axiom Engine root directory
+3. Paste the contents above, replacing "your-correct-anon-key-here" with the actual key from your main app
+4. Restart your development server after creating/updating the `.env` file
+
+This will ensure that Supabase authentication works correctly in the InoAIPremium.tsx component. 

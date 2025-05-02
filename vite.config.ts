@@ -19,8 +19,8 @@ export default defineConfig({
   },
   define: {
     'process.env': {
-      VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co',
-      VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key',
+      VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || 'https://ccbvfyyxdlojebatfupf.supabase.co',
+      VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjYnZmeXl4ZGxvamViYXRmdXBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODQ1MDEwNDcsImV4cCI6MjAwMDA3NzA0N30.Fjp6KArBD_kVLkOeXzG24nTYLnYZQHE8S-Qfweb8v5k',
       VITE_APP_NAME: process.env.VITE_APP_NAME || 'AxiomEngine',
       VITE_APP_URL: process.env.VITE_APP_URL || 'https://axiomengine.getino.app'
     }
