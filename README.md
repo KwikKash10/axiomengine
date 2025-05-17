@@ -127,3 +127,17 @@ If you encounter issues:
 - All API calls are made server-side
 - Access control can be implemented on the server
 - API usage can be monitored and limited as needed 
+
+## Stable Release v1.2.0
+
+Released: May 17, 2025
+
+### Changes
+- Updated loading message to "Loading Axiom Engine..."
+
+### Commit Details
+- **Commit Hash**: 12df27e504578a1549a661584bbbf9b968c65a19
+- **Author**: Hustle10 <hustle10@gmail.com>
+- **Project URL**: https://github.com/KwikKash10/axiomengine
+- **Branch**: stable-release
+- **Tag**: v1.2.0 
